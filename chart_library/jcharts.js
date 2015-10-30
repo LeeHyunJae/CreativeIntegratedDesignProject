@@ -3,14 +3,34 @@
 	Seoul National University
 */
 (function (win) {
-var Jcharts, ctx, type, set, range, width, height, renderers;
+var Jcharts, ctx, type, set, range, width, height, renderers, colors, themes;
 
 range = [0, 0];
 renderers = {
-	"line" : renderLineChart
-}
+
 
 // Parsing functions
+	"line" : renderLineChart,
+	"bar" : renderBarChart,
+	"pie": renderPieChart
+}
+
+
+  themes = {
+    "blues":  ["#7eb5d6", "#2a75a9", "#214b6b", "#dfc184", "#8f6048"],
+    "money":  ["#009b6d", "#89d168", "#d3eb87", "#666666", "#aaaaaa"],
+    "circus": ["#9351a4", "#ff99cc", "#e31a1c", "#66cdaa", "#ffcc33"],
+    "party":  ["#ffcc00", "#ff66cc", "#3375cd", "#e43b3b", "#96cb3f"],
+    "garden": ["#3c7bb0", "#ffa07a", "#2e8b57", "#7eb5d6", "#89d168"],
+    "crayon": ["#468ff0", "#ff8000", "#00c000", "#ffd700", "#ff4500"],
+    "ocean":  ["#3375cd", "#62ccb2", "#4aa5d5", "#a6cee3", "#ffcc33"],
+    "spring": ["#ed729d", "#72caed", "#9e9ac8", "#a6d854", "#f4a582"],
+    "beach":  ["#f92830", "#2fb4b1", "#ffa839", "#3375cd", "#5fd1d5"],
+    "fire":   ["#dc143c", "#ff8c00", "#ffcc33", "#b22222", "#cd8540"]
+  };
+
+	colors = themes["money"];
+// Parse attributes : "a, b, c" -> ["a", "b", "c"]
 function parseAttr(elem, attr) {
 	var val = elem.getAttribute(attr);
 
@@ -99,6 +119,46 @@ function renderBarChart() {
 // 		}
     }
  }
+
+  function sumSet(set) {
+      var i, n = 0;
+
+      for (i = 0; i < set.length; i++) {
+          n += set[i];
+      }
+
+      return n;
+  }
+
+  // Render a pie chart
+  function renderPieChart() {
+      var i, x, y, r, a1, a2, sum;
+
+      x = width / 2;
+      y = height / 2;
+      r = Math.min(x, y) - 2;
+      a1 = 1.5 * Math.PI;
+      a2 = 0;
+      sum = sumSet(set);
+
+      for (i = 0; i < set.length; i++) {
+          ctx.fillStyle = colors[i];
+          ctx.beginPath();
+          a2 = a1 + (set[i] / sum) * (2 * Math.PI);
+
+          // TODO opts.wedge
+          ctx.arc(x, y, r, a1, a2, false);
+          ctx.lineTo(x, y);
+          ctx.fill();
+          a1 = a2;
+      }
+  }
+
+ function getYForValue(val) {
+    var h = height;
+
+    return h - (h * ((val - range[0]) / (range[1] - range[0])));
+}
 
 
 // Initiation functions
