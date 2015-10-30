@@ -6,7 +6,8 @@
 var Jcharts, ctx, type, set, range, width, height, renderers;
 
 renderers = {
-	"line" : renderLineChart
+	"line" : renderLineChart,
+	"bar" : renderBarChart
 }
 
 // Parse attributes : "a, b, c" -> ["a", "b", "c"]
@@ -56,6 +57,40 @@ function renderLineChart(set) {
 	drawLineForSet(set);
 }
 
+ // Render a bar chart
+function renderBarChart() {
+    var i, j, p, a, x, y, w, h, len;
+
+    //drawAxis();
+    ctx.lineWidth = 10;
+    ctx.lineJoin = "miter";
+
+    len = set.length;
+
+	console.log("len: " + len);
+    for (i = 0; i < set.length; i++) {
+//      for (j = 0; j < len; j++) {
+        p = 1;
+        w = 1;
+        x = i*20;
+        y = getYForValue(set[i]);
+        h = y - getYForValue(0) || 1;
+
+        console.log("debug! x:" + x + " y : " + y + "  w : " + w + "  h:  "  + h);
+        ctx.fillStyle = "#FF0000";
+        ctx.fillRect(x, y - h, w*10, h);
+// 		}
+    }
+ }
+
+ function getYForValue(val) {
+    var h = height;
+
+    return h - (h * ((val - range[0]) / (range[1] - range[0])));
+}
+
+
+
 function init(elem) {
 	type = parseAttr(elem, "data-type")[0];
 	set = parseSet(elem.getAttribute("data-set"));
@@ -73,6 +108,7 @@ function init(elem) {
 	console.log("type: " + type);
 	console.log("set: " + set);
 	console.log("range: " + range);
+	console.log("width: " + width);
 	console.log();
 }
 
