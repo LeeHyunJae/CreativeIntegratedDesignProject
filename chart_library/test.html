@@ -9,25 +9,11 @@
 		</style>
 	</head>
 	<body>
-		<canvas id="test" class="jchart" data-type="line" data-set="1 10 2 9 3 8 4 7 5 6 5" width="500" height="500"></canvas>
+		<canvas id="test" class="jchart" data-type="line" width="500" data-set="1 2 3" height="500"></canvas>
 	</body>
-	<script src="jcharts.js"></script>
 	<script src="mqttws31.js"></script>
-	<script src="mqttclient.js"></script>
+	<script src="jcharts.js"></script>
 	<script>
-		var data;
-
-		Jcharts.render();
-		data = MQTT.getData();
-
-		function updateAll() {
-			var elems = document.querySelectorAll(".jchart")
-
-			console.log(data);
-			Jcharts.update(elems[0].id, data.toString());
-		}
-
-		setInterval(function() {updateAll()}, 1000);
+		setInterval(function() {Jcharts.render()}, 1000);
 	</script>
 </html>
-
