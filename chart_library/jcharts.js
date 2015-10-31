@@ -185,6 +185,7 @@
 
 	function renderBarChart() {
 	    var i, j, p, a, x, y, w, h, len;
+		var max_elem, interval, x_offset;
 
 	    //drawAxis();
 	    ctx.lineWidth = 10;
@@ -192,18 +193,22 @@
 
 	    len = set.length;
 
+		x_offset = 50;
+		max_elem = 20;
+		interval = (width - (2*x_offset)) / max_elem;
+		
 		console.log("len: " + len);
 	    for (i = 0; i < set.length; i++) {
 	//      for (j = 0; j < len; j++) {
 	        p = 1;
 	        w = 1;
-	        x = i*20;
+	        x = len < max_elem ? (i + max_elem - len) * interval : i*interval;
 	        y = getYForValue(set[i]);
 	        h = y - getYForValue(0) || 1;
 
 	        console.log("debug! x:" + x + " y : " + y + "  w : " + w + "  h:  "  + h);
 	        ctx.fillStyle = "#FF0000";
-	        ctx.fillRect(x, y - h, w*10, h);
+	        ctx.fillRect(x_offset + x, y - h, w*(interval-2), h);
 	// 		}
 	    }
 	 }
