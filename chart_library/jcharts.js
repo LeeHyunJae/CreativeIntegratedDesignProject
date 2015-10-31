@@ -58,14 +58,19 @@
 	/*
 		Graph part
 	*/
-	var Jcharts, ctx, type, range, width, height, renderers;
+	var Jcharts, ctx, type, range, width, height, renderers, offset;
 
-	range = [0, 0];
+	range = {
+		"line" : [0, 150],
+		"bar" : [0, 100],
+		"pie" : [0, 100]
+	}
 	renderers = {
 		"line" : renderLineChart,
 		"bar" : renderBarChart,
 		"pie" : renderBarChart
 	};
+	offset = 50;
 
 	// Parsing functions
 	function parseAttr(elem, attr) {
@@ -73,45 +78,41 @@
 
 		return val ? val.replace(/, +/g, " ").split(/ +/g) : null;
 	}
-/*
-	function parseSet(str) {
-		var set, i, j;
-
-		set = str.match(/[-\d\.]+/g);
-		if (set == null) {
-			set = [1];
-		}
-
-		for (i = 0; i < set.length; i++) {
-			set[i] = +set[i];
-		}
-
-		return set;
-	}
-*/
-	// Computing range functions
-	function getRange(set) {
-		return [Math.min.apply(null, set), Math.max.apply(null, set)];
-	}
-
+	
 	// Drawing line chart functions
 	function getXStep(len) {
-		return width / (len - 1);
+		return (width - 2 * offset) / (len - 1);
 	}
 
 	function getXForIndex(idx, len) {
-		return idx * getXStep(len);
+		return offset + idx * getXStep(len);
 	}
 
-	function getYForValue(val) {
-		return height - (height * ((val - range[0]) / (range[1] - range[0])));
+	function getYForValue(val, range) {
+		var h = height - 2 * offset;
+
+		return h - (h * ((val - range[0]) / (range[1] - range[0]))) + offset;
 	}
 
-	function drawAxis(val, range) {
-		ctx.strokeStyle = "FF0000";
-		ctx.moveTo(0, height / 2);
-		ctx.lineTo(width, height / 2)
-		ctx.stroke();
+	function drawAxis(vals, range) {
+		var i, val, h;
+
+		for (i = 0; i < vals.length; i++) {
+			val = vals[i];
+			h = getYForValue(val, range);
+
+			ctx.font = "20px Consolas";
+			ctx.fillText(val, 10, h + 5);
+
+			ctx.strokeStyle = "FF0000";
+			ctx.moveTo(offset, h);
+			ctx.lineTo(width - offset, h)
+			ctx.stroke();
+		}
+	}
+
+	function drawAxisForLine() {
+
 	}
 
 	function drawAxisForBar() {
@@ -165,11 +166,11 @@
 		ctx.lineJoin = "round";
 		ctx.beginPath();
 		ctx.strokeStyle = "#bbb";
-		ctx.moveTo(0, getYForValue(set[0]));
+		ctx.moveTo(offset, getYForValue(set[0], range.line));
 
 		while (++i < set.length) {
 			x = getXForIndex(i, set.length);
-			y = getYForValue(set[i]);
+			y = getYForValue(set[i], range.line);
 
 			drawLineSegment(x, y);
 		}
@@ -178,7 +179,7 @@
 	}
 
 	function renderLineChart(set) {
-		drawAxis();
+		drawAxis([0, 50, 100, 150], range.line);
 		drawLineForSet(set);
 	}
 
@@ -213,8 +214,6 @@
 		var i;
 
 		type = parseAttr(elem, "data-type")[0];
-		set = data[type];
-		range = parseAttr(elem, "data-range") || getRange(set);
 		width = elem.width;
 		height = elem.height;
 		ctx = elem.getContext("2d");
@@ -223,7 +222,7 @@
 		elem.width = elem.width;
 
 		try {
-			renderers[type](set);
+			renderers[type](data[type]);
 		} catch (e) {
 			console.error(e.message);
 		}
