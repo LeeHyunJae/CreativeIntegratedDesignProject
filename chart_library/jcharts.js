@@ -21,8 +21,6 @@
 		while (data[type].length > dataMaxLen) {
 			data[type].shift();
 		}
-
-		console.log(data[type]);
 	}
 
 	/*
@@ -30,7 +28,7 @@
 	*/
 	var MQTT, mqttClient;
 
-	mqttClient = new Paho.MQTT.Client("cloud2logic.com", 1884, "jchart");
+	mqttClient = new Paho.MQTT.Client("cloud2logic.com", 1884, "jchart1");
 	mqttClient.onConnectionLost = onConnectionLost;
 	mqttClient.onMessageArrived = onMessageArrived;
 	mqttClient.connect({onSuccess:onConnect});
@@ -61,14 +59,14 @@
 	var Jcharts, ctx, type, range, width, height, renderers, offset;
 
 	range = {
-		"line" : [0, 150],
-		"bar" : [0, 100],
+		"line" : [-50, 50],
+		"bar" : [-50, 50],
 		"pie" : [0, 100]
 	}
 	renderers = {
 		"line" : renderLineChart,
 		"bar" : renderBarChart,
-		"pie" : renderBarChart
+		"pie" : renderPieChart
 	};
 	offset = 50;
 
@@ -99,6 +97,9 @@
 
 		for (i = 0; i < vals.length; i++) {
 			val = vals[i];
+			if (val < range[0] || val > range[1]) {
+				continue;
+			}
 			h = getYForValue(val, range);
 
 			ctx.font = "20px Consolas";
@@ -153,13 +154,20 @@
 		}
 	}
 
-	function drawLineSegment(x, y) {
-		ctx.lineTo(x, y);
+	function setMinMax(set, range) {
+		var i;
+
+		for (i = 0; i < set.length; i++) {
+			if (set[i] < range[0]) set[i] = range[0];
+			else if (set[i] > range[1]) set[i] = range[1];
+		}
 	}
 
-	function drawLineForSet(set) {
+	function renderLineChart(set) {
 		var i = 0, x, y, step;
 
+		setMinMax(set, range.line);
+		drawAxis([-50, 0, 50], range.line);
 		step = getXStep(set.length);
 
 		ctx.lineWidth = 3;
@@ -171,46 +179,40 @@
 		while (++i < set.length) {
 			x = getXForIndex(i, set.length);
 			y = getYForValue(set[i], range.line);
-
-			drawLineSegment(x, y);
+			ctx.lineTo(x, y);
 		}
 
 		ctx.stroke();
 	}
 
-	function renderLineChart(set) {
-		drawAxis([0, 50, 100, 150], range.line);
-		drawLineForSet(set);
-	}
-
-	function renderBarChart() {
+	function renderBarChart(set) {
 	    var i, j, p, a, x, y, w, h, len;
-		var max_elem, interval, x_offset;
+		var max_elem, interval;
 
-	    //drawAxis();
+		setMinMax(set, range.bar)
+	    drawAxis([-50, -25, 0, 25, 50], range.bar);
+
 	    ctx.lineWidth = 10;
 	    ctx.lineJoin = "miter";
 
 	    len = set.length;
 
-		x_offset = 50;
 		max_elem = 20;
-		interval = (width - (2*x_offset)) / max_elem;
-		
-		console.log("len: " + len);
+		interval = (width - (2 * offset)) / max_elem;
+	
 	    for (i = 0; i < set.length; i++) {
-	//      for (j = 0; j < len; j++) {
+//			for (j = 0; j < len; j++) {
 	        p = 1;
 	        w = 1;
-	        x = len < max_elem ? (i + max_elem - len) * interval : i*interval;
-	        y = getYForValue(set[i]);
-	        h = y - getYForValue(0) || 1;
+	        x = len < max_elem ? (i + max_elem - len) * interval : i * interval;
+	        y = getYForValue(set[i], range.bar);
+	        h = y - getYForValue(0, range.bar) || 1;
 
-	        console.log("debug! x:" + x + " y : " + y + "  w : " + w + "  h:  "  + h);
+//	        console.log("debug! x:" + x + " y : " + y + "  w : " + w + "  h:  "  + h);
 	        ctx.fillStyle = "#FF0000";
-	        ctx.fillRect(x_offset + x, y - h, w*(interval-2), h);
-	// 		}
-	    }
+	        ctx.fillRect(offset + x, y - h, w*(interval-2), h);
+//			}
+		}
 	 }
 
 
