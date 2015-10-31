@@ -56,7 +56,7 @@
 	/*
 		Graph part
 	*/
-	var Jcharts, ctx, type, range, width, height, renderers, offset;
+	var Jcharts, ctx, type, range, width, height, renderers, offset, chart_elem_num;
 
 	range = {
 		"line" : [-50, 50],
@@ -69,6 +69,7 @@
 		"pie" : renderPieChart
 	};
 	offset = 50;
+	chart_elem_num = 20;
 
 	// Parsing functions
 	function parseAttr(elem, attr) {
@@ -78,12 +79,12 @@
 	}
 	
 	// Drawing line chart functions
-	function getXStep(len) {
-		return (width - 2 * offset) / (len - 1);
+	function getXInterval(elem_number) {
+		return (width - 2 * offset) / elem_number;
 	}
 
-	function getXForIndex(idx, len) {
-		return offset + idx * getXStep(len);
+	function getXForIndex(idx, elem_number) {
+		return offset + idx * getXInterval(elem_number);
 	}
 
 	function getYForValue(val, range) {
@@ -104,12 +105,25 @@
 
 			ctx.font = "20px Consolas";
 			ctx.fillText(val, 10, h + 5);
-
-			ctx.strokeStyle = "FF0000";
-			ctx.moveTo(offset, h);
-			ctx.lineTo(width - offset, h)
-			ctx.stroke();
+			drawDotLine(offset, width - offset, h);
 		}
+	}
+
+	function drawDotLine(start_x, end_x, y){
+		var i, len;
+
+		len = parseInt((end_x - start_x) / 5);
+
+		ctx.strokeStyle = "#bbb";
+
+		for(i = 0; i < len + 1; i++){
+			if(i%2 == 0){
+				ctx.moveTo(start_x + i*5, y);
+				ctx.lineTo(start_x + (i+1)*5, y);
+			}
+		}
+
+		ctx.stroke();
 	}
 
 	function drawAxisForLine() {
@@ -164,30 +178,33 @@
 	}
 
 	function renderLineChart(set) {
-		var i = 0, x, y, step;
+		var i, x, y, len;
 
 		setMinMax(set, range.line);
-		drawAxis([-50, 0, 50], range.line);
-		step = getXStep(set.length);
+		drawAxis([-50, -25, 0, 25, 50], range.line);
+
+		len = set.length;
 
 		ctx.lineWidth = 3;
 		ctx.lineJoin = "round";
+		ctx.strokeStyle = "#FF0000";
 		ctx.beginPath();
-		ctx.strokeStyle = "#bbb";
-		ctx.moveTo(offset, getYForValue(set[0], range.line));
-
-		while (++i < set.length) {
-			x = getXForIndex(i, set.length);
+		
+		for (i = 0; i < len; i++){
+			w = 1;
+			x = len < chart_elem_num ? getXForIndex((i + chart_elem_num - len), chart_elem_num) : getXForIndex(i, chart_elem_num);
 			y = getYForValue(set[i], range.line);
-			ctx.lineTo(x, y);
-		}
+			h = y - getYForValue(0, range.line) || 1;
+            if(i==0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+        }
 
-		ctx.stroke();
+        ctx.stroke();
+
 	}
 
 	function renderBarChart(set) {
 	    var i, j, p, a, x, y, w, h, len;
-		var max_elem, interval;
 
 		setMinMax(set, range.bar)
 	    drawAxis([-50, -25, 0, 25, 50], range.bar);
@@ -197,21 +214,15 @@
 
 	    len = set.length;
 
-		max_elem = 20;
-		interval = (width - (2 * offset)) / max_elem;
-	
 	    for (i = 0; i < set.length; i++) {
-//			for (j = 0; j < len; j++) {
 	        p = 1;
 	        w = 1;
-	        x = len < max_elem ? (i + max_elem - len) * interval : i * interval;
+            x = len < chart_elem_num ? getXForIndex((i + chart_elem_num - len), chart_elem_num) : getXForIndex(i, chart_elem_num);
 	        y = getYForValue(set[i], range.bar);
 	        h = y - getYForValue(0, range.bar) || 1;
 
-//	        console.log("debug! x:" + x + " y : " + y + "  w : " + w + "  h:  "  + h);
 	        ctx.fillStyle = "#FF0000";
-	        ctx.fillRect(offset + x, y - h, w*(interval-2), h);
-//			}
+	        ctx.fillRect(x, y - h, w*(getXInterval(chart_elem_num)-2), h);
 		}
 	 }
 
