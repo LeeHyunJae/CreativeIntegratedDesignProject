@@ -9,9 +9,11 @@
 	var data, dataMaxLne;
 
 	data = {
-		"line" : []
+		"line" : [],
+		"bar" : [],
+		"pie" : []
 	};
-	dataMaxLen = 10;
+	dataMaxLen = 20;
 
 	function push(type, elem) {
 		data[type].push(elem);
@@ -60,7 +62,9 @@
 
 	range = [0, 0];
 	renderers = {
-		"line" : renderLineChart
+		"line" : renderLineChart,
+		"bar" : renderBarChart,
+		"pie" : renderBarChart
 	};
 
 	// Parsing functions
@@ -103,6 +107,51 @@
 		return height - (height * ((val - range[0]) / (range[1] - range[0])));
 	}
 
+	function drawAxis(val, range) {
+		ctx.strokeStyle = "FF0000";
+		ctx.moveTo(0, height / 2);
+		ctx.lineTo(width, height / 2)
+		ctx.stroke();
+	}
+
+	function drawAxisForBar() {
+
+	}
+
+	function sumSet(set) {
+		var i, n = 0;
+
+		for (i = 0; i < set.length; i++) {
+			n += set[i];
+		}
+	
+		return n;
+	}
+
+	// Render a pie chart
+	function renderPieChart() {
+		var i, x, y, r, a1, a2, sum;
+	
+		x = width / 2;
+		y = height / 2;
+		r = Math.min(x, y) - 2;
+		a1 = 1.5 * Math.PI;
+		a2 = 0;
+		sum = sumSet(set);
+
+		for (i = 0; i < set.length; i++) {
+			ctx.fillStyle = colors[i];
+			ctx.beginPath();
+			a2 = a1 + (set[i] / sum) * (2 * Math.PI);
+
+			// TODO opts.wedge
+			ctx.arc(x, y, r, a1, a2, false);
+			ctx.lineTo(x, y);
+			ctx.fill();
+			a1 = a2;
+		}
+	}
+
 	function drawLineSegment(x, y) {
 		ctx.lineTo(x, y);
 	}
@@ -129,6 +178,7 @@
 	}
 
 	function renderLineChart(set) {
+		drawAxis();
 		drawLineForSet(set);
 	}
 
