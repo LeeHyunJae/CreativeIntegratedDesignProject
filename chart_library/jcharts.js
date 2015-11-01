@@ -14,7 +14,8 @@
 		"pie" : []
 	};
 	dataMaxLen = 20;
-
+    
+	// push elem to data[type]
 	function push(type, elem) {
 		data[type].push(elem);
 
@@ -38,13 +39,13 @@
 		
 		mqttClient.subscribe("project/test");
 	}
-		
+	
 	function onConnectionLost(responseObject) {
 	  if (responseObject.errorCode !== 0) {
 	    console.log("onConnectionLost: " + responseObject.errorMessage);
 	  }
 	}
-
+	 
 	function onMessageArrived(message) {
 		var json, arr;
 
@@ -56,7 +57,7 @@
 	/*
 		Graph part
 	*/
-	var Jcharts, ctx, type, range, width, height, renderers, offset, chart_elem_num;
+	var Jcharts, ctx, type, range, width, height, renderers, offset, maxChartElem;
 
 	range = {
 		"line" : [-50, 50],
@@ -69,7 +70,7 @@
 		"pie" : renderPieChart
 	};
 	offset = 50;
-	chart_elem_num = 20;
+	maxChartElem = 20;
 
 	// Parsing functions
 	function parseAttr(elem, attr) {
@@ -83,16 +84,19 @@
 		return (width - 2 * offset) / elem_number;
 	}
 
+	// return ith x coordinate
 	function getXForIndex(idx, elem_number) {
 		return offset + idx * getXInterval(elem_number);
 	}
 
+	// return y coordinate for input value
 	function getYForValue(val, range) {
 		var h = height - 2 * offset;
 
 		return h - (h * ((val - range[0]) / (range[1] - range[0]))) + offset;
 	}
 
+	// draw axis function
 	function drawAxis(vals, range) {
 		var i, val, h;
 
@@ -109,6 +113,7 @@
 		}
 	}
 
+	// draw dot line from start_x to end_x
 	function drawDotLine(start_x, end_x, y){
 		var i, len;
 
@@ -133,7 +138,8 @@
 	function drawAxisForBar() {
 
 	}
-
+	
+	// sum up all set values
 	function sumSet(set) {
 		var i, n = 0;
 
@@ -144,7 +150,7 @@
 		return n;
 	}
 
-	// Render a pie chart
+	// Render pie chart function
 	function renderPieChart() {
 		var i, x, y, r, a1, a2, sum;
 	
@@ -167,7 +173,7 @@
 			a1 = a2;
 		}
 	}
-
+    // convert out of range values to max or min values
 	function setMinMax(set, range) {
 		var i;
 
@@ -177,6 +183,7 @@
 		}
 	}
 
+	// render line chart function 
 	function renderLineChart(set) {
 		var i, x, y, len;
 
@@ -192,7 +199,7 @@
 		
 		for (i = 0; i < len; i++){
 			w = 1;
-			x = len < chart_elem_num ? getXForIndex((i + chart_elem_num - len), chart_elem_num) : getXForIndex(i, chart_elem_num);
+			x = len < maxChartElem ? getXForIndex((i + maxChartElem - len), maxChartElem) : getXForIndex(i, maxChartElem);
 			y = getYForValue(set[i], range.line);
 			h = y - getYForValue(0, range.line) || 1;
             if(i==0) ctx.moveTo(x, y);
@@ -203,8 +210,9 @@
 
 	}
 
+	// render bar chart function
 	function renderBarChart(set) {
-	    var i, j, p, a, x, y, w, h, len;
+	    var i, a, x, y, w, h, len;
 
 		setMinMax(set, range.bar)
 	    drawAxis([-50, -25, 0, 25, 50], range.bar);
@@ -215,14 +223,13 @@
 	    len = set.length;
 
 	    for (i = 0; i < set.length; i++) {
-	        p = 1;
 	        w = 1;
-            x = len < chart_elem_num ? getXForIndex((i + chart_elem_num - len), chart_elem_num) : getXForIndex(i, chart_elem_num);
+            x = len < maxChartElem ? getXForIndex((i + maxChartElem - len), maxChartElem) : getXForIndex(i, maxChartElem);
 	        y = getYForValue(set[i], range.bar);
 	        h = y - getYForValue(0, range.bar) || 1;
 
 	        ctx.fillStyle = "#FF0000";
-	        ctx.fillRect(x, y - h, w*(getXInterval(chart_elem_num)-2), h);
+	        ctx.fillRect(x, y - h, w*(getXInterval(maxChartElem)-2), h);
 		}
 	 }
 
