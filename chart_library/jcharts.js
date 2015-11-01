@@ -11,6 +11,7 @@
 		"bar" : [],
 		"pie" : []
 	};
+	/*
 	var config = {
 		"line" : {
 			"maxLength" : 10
@@ -21,31 +22,20 @@
 		"pie" : {
 			"maxLength" : 10
 		}
-	};
+	};*/
 	
-	function getConfig() {
-	  var xmlHttp = new XMLHttpRequest();
-	  xmlHttp.onreadystatechange = function() {
-	    if (xmlHttp.readyState == 4 && xmlHttp.status == 200) {
-				config = JSON.parse(xmlHttp.responseText);
-	    }
-	  };
-	  xmlHttp.open("GET", "http://chart.kr.pe/project/chart_library/config.json", true);
-	  xmlHttp.send();
-	}
-
 	function getData() {
     var xmlHttp = new XMLHttpRequest();
 		xmlHttp.onreadystatechange = function() {
 			if (xmlHttp.readyState == 4 && xmlHttp.status == 200) {
 				data = JSON.parse(xmlHttp.responseText);
+				console.log("data: " +(data.line[19]));
 			}
 		};
-		xmlHttp.open("GET", "http://chart.kr.pe/project/chart_library/data.json", true);
+		xmlHttp.open("GET", "http://chart.kr.pe/jd_test/CreativeIntegratedDesignProject/chart_library/data.json", true);
 		xmlHttp.send();
 	}
 
-	getConfig();
 	getData();
 
 	/*
@@ -55,7 +45,7 @@
 
 	range = {
 		"line" : [-50, 50],
-		"bar" : [-50, 50],
+		"bar" : [0, 100],
 		"pie" : [0, 100]
 	}
 	renderers = {
@@ -102,9 +92,14 @@
 			h = getYForValue(val, range);
 
 			ctx.font = "20px Consolas";
+			ctx.fillStyle="white";
 			ctx.fillText(val, 10, h + 5);
 			drawDotLine(offset, width - offset, h);
 		}
+		
+		ctx.fillText("-20s", 40, height-20); 
+		ctx.fillText("-10s", 0.5*width-55, height-20);
+		ctx.fillText("now", width-95, height-20);
 	}
 
 	// draw dot line from start_x to end_x
@@ -124,14 +119,6 @@
 
 		ctx.stroke();
 	}
-
-	function drawAxisForLine() {
-
-	}
-
-	function drawAxisForBar() {
-
-	}
 	
 	// sum up all set values
 	function sumSet(set) {
@@ -142,6 +129,28 @@
 		}
 	
 		return n;
+	}
+
+  // convert out of range values to max or min values
+	function setMinMax(set, range) {
+		var i;
+  /*
+		switch(type){
+			case "line" :
+				range = range.line;
+				break;
+			case "bar" :
+				range = range.bar;
+				break;
+			case "pie" :
+				range = range.pie;
+				break;
+		}
+  */
+		for (i = 0; i < set.length; i++) {
+			if (set[i] < range[0]) set[i] = range[0];
+			else if (set[i] > range[1]) set[i] = range[1];
+		}
 	}
  
 	// set graph color type optionally
@@ -163,6 +172,13 @@
 			ctx.strokeStyle = color[0];
 			ctx.fillStyle = color[0];
 		}
+	}
+
+	function setBackground(grad, section, color, opacity){
+		
+		//ctx.globalAlpha = opacity;
+		setColorType(grad, section, color);
+		ctx.fillRect(0,0,width,height);		
 	}
 
 	// Render pie chart function
@@ -188,79 +204,62 @@
 			a1 = a2;
 		}
 	}
-    // convert out of range values to max or min values
-	function setMinMax(set, range) {
-		var i;
-/*
-		switch(type){
-			case "line" :
-				range = range.line;
-				break;
-			case "bar" :
-				range = range.bar;
-				break;
-			case "pie" :
-				range = range.pie;
-				break;
-		}
-*/
-		for (i = 0; i < set.length; i++) {
-			if (set[i] < range[0]) set[i] = range[0];
-			else if (set[i] > range[1]) set[i] = range[1];
-		}
-	}
 
-	// render line chart function 
+  // render line chart function 
 	function renderLineChart(set) {
 		var i, x, y, len, gradient;
 
 		setMinMax(set, range.line);
-		drawAxis([-50, -25, 0, 25, 50], range.line);
+		setBackground(true, [0,1], ["#002b33","#0080cc"]);
+		//setBackground(true, [0,0.5,1], ["white","#f2f2f2","white"]);
+		drawAxis([-50,-25,0,25,50], range.line);
 
 		len = set.length;
 
 		ctx.lineWidth = 3;
 		ctx.lineJoin = "round";
-		setColorType(true, [0,0.5,1],["green",'rgb(100,0,0)','rgb(0,0,100)']); 
+		setColorType(true, [0,1],["#ff8033","#ffd533"]);
+		//setColorType(true, [0,0.5,1],["green",'rgb(100,0,0)','rgb(0,0,100)']); 
 		ctx.beginPath();
 		
 		for (i = 0; i < len; i++){
 			w = 1;
 			x = len < maxChartElem ? getXForIndex((i + maxChartElem - len), maxChartElem) : getXForIndex(i, maxChartElem);
+			x += 0.5*getXInterval(maxChartElem);
 			y = getYForValue(set[i], range.line);
 			h = y - getYForValue(0, range.line);
-            if(i==0) ctx.moveTo(x, y);
-            else ctx.lineTo(x, y);
-        }
+        if(i==0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+    }
 
         ctx.stroke();
-
 	}
 
 	// render bar chart function
 	function renderBarChart(set) {
-	    var i, a, x, y, w, h, len;
+	  var i, a, x, y, w, h, len;
 
 		setMinMax(set, range.bar);
-	    drawAxis([-50, -25, 0, 25, 50], range.bar);
+	  setBackground(true, [0,1], ["#002b33","#0080cc"]);
+		//setBackground(true, [0,0.5,1], ["white","#f2f2f2","white"]);
+		drawAxis([0,20,40,60,80,100], range.bar);
 
-	    ctx.lineWidth = 10;
-	    ctx.lineJoin = "miter";
-	    setColorType(true, [0,1],["green",'rgb(0,0,100)']); 
+	  ctx.lineWidth = 10;
+	  ctx.lineJoin = "miter";
+	  setColorType(true, [0,1],["#ff8033","#ffd533"]); 
 
-	    len = set.length;
+	  len = set.length;
 
-	    for (i = 0; i < set.length; i++) {
-	        w = 1;
-            x = len < maxChartElem ? getXForIndex((i + maxChartElem - len), maxChartElem) : getXForIndex(i, maxChartElem);
-	        y = getYForValue(set[i], range.bar);
-	        h = y - getYForValue(0, range.bar);
+    for (i = 0; i < set.length; i++) {
+       w = 1;
+       x = len < maxChartElem ? getXForIndex((i + maxChartElem - len), maxChartElem) : getXForIndex(i, maxChartElem);
+       y = getYForValue(set[i], range.bar);
+       h = y - getYForValue(0, range.bar);
 
-	        //ctx.fillStyle = "#FF0000";
-	        ctx.fillRect(x, y - h, w*(getXInterval(maxChartElem)-2), h);
+       //ctx.fillStyle = "#FF0000";
+       ctx.fillRect(x, y - h, w*(getXInterval(maxChartElem)-8), h);
 		}
 	 }
-
 
 	// Initiation functions
 	function init(elem) {
