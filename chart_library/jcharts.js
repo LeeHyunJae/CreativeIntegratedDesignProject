@@ -6,15 +6,48 @@
 	/*
 		Shared data
 	*/
-	var data, dataMaxLen;
-
-	data = {
+	var data = {
 		"line" : [],
 		"bar" : [],
 		"pie" : []
 	};
-	dataMaxLen = 20;
-   
+	var config = {
+		"line" : {
+			"maxLength" : 10
+		},
+		"bar" : {
+			"maxLength" : 10
+		},
+		"pie" : {
+			"maxLength" : 10
+		}
+	};
+	
+	function getConfig() {
+	  var xmlHttp = new XMLHttpRequest();
+	  xmlHttp.onreadystatechange = function() {
+	    if (xmlHttp.readyState == 4 && xmlHttp.status == 200) {
+				config = JSON.parse(xmlHttp.responseText);
+	    }
+	  };
+	  xmlHttp.open("GET", "http://chart.kr.pe/project/chart_library/config.json", true);
+	  xmlHttp.send();
+	}
+
+	function getData() {
+    var xmlHttp = new XMLHttpRequest();
+		xmlHttp.onreadystatechange = function() {
+			if (xmlHttp.readyState == 4 && xmlHttp.status == 200) {
+				data = JSON.parse(xmlHttp.responseText);
+			}
+		};
+		xmlHttp.open("GET", "http://chart.kr.pe/project/chart_library/data.json", true);
+		xmlHttp.send();
+	}
+
+	getConfig();
+	getData();
+
 	/*
 		Graph part
 	*/
@@ -253,6 +286,8 @@
 	Jcharts = {
 	    render: function(elems) {
 	      var i;
+
+				getData();
 
 	      if (!elems) {
 	        elems = document.querySelectorAll(".jchart");

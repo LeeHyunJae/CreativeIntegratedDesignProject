@@ -1,0 +1,13 @@
+{
+	"line": {
+		"maxLength": "10"
+	},
+
+	"bar": {
+		"maxLength": "20"
+	},
+
+	"pie" {
+		"maxLength": "20"
+	}
+}
