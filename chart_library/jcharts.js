@@ -6,7 +6,7 @@
 	/*
 		Shared data
 	*/
-	var data, dataMaxLne;
+	var data, dataMaxLen;
 
 	data = {
 		"line" : [],
@@ -14,46 +14,7 @@
 		"pie" : []
 	};
 	dataMaxLen = 20;
-    
-	// push elem to data[type]
-	function push(type, elem) {
-		data[type].push(elem);
-
-		while (data[type].length > dataMaxLen) {
-			data[type].shift();
-		}
-	}
-
-	/*
-		MQTT Part
-	*/
-	var MQTT, mqttClient;
-
-	mqttClient = new Paho.MQTT.Client("cloud2logic.com", 1884, "jchart1");
-	mqttClient.onConnectionLost = onConnectionLost;
-	mqttClient.onMessageArrived = onMessageArrived;
-	mqttClient.connect({onSuccess:onConnect});
-
-	function onConnect() {
-		console.log("MQTT connected");
-		
-		mqttClient.subscribe("project/test");
-	}
-	
-	function onConnectionLost(responseObject) {
-	  if (responseObject.errorCode !== 0) {
-	    console.log("onConnectionLost: " + responseObject.errorMessage);
-	  }
-	}
-	 
-	function onMessageArrived(message) {
-		var json, arr;
-
-		json = JSON.parse(message.payloadString);
-		console.log("data arrived: " + JSON.stringify(json));
-		push(json.type, json.value);
-	}
-
+   
 	/*
 		Graph part
 	*/
@@ -149,6 +110,27 @@
 	
 		return n;
 	}
+ 
+	// set graph color type optionally
+	function setColorType(grad, section, color){
+		var i, len, gradient;
+		
+		if(grad){
+			len = section.length;
+			gradient = ctx.createLinearGradient(0,0,0,height);
+			
+			for(i=0; i<len; i++){
+				gradient.addColorStop(section[i], color[i]);
+			}
+			
+			ctx.strokeStyle = gradient;
+			ctx.fillStyle = gradient;
+		}
+		else{
+			ctx.strokeStyle = color[0];
+			ctx.fillStyle = color[0];
+		}
+	}
 
 	// Render pie chart function
 	function renderPieChart() {
@@ -176,7 +158,19 @@
     // convert out of range values to max or min values
 	function setMinMax(set, range) {
 		var i;
-
+/*
+		switch(type){
+			case "line" :
+				range = range.line;
+				break;
+			case "bar" :
+				range = range.bar;
+				break;
+			case "pie" :
+				range = range.pie;
+				break;
+		}
+*/
 		for (i = 0; i < set.length; i++) {
 			if (set[i] < range[0]) set[i] = range[0];
 			else if (set[i] > range[1]) set[i] = range[1];
@@ -185,7 +179,7 @@
 
 	// render line chart function 
 	function renderLineChart(set) {
-		var i, x, y, len;
+		var i, x, y, len, gradient;
 
 		setMinMax(set, range.line);
 		drawAxis([-50, -25, 0, 25, 50], range.line);
@@ -194,14 +188,14 @@
 
 		ctx.lineWidth = 3;
 		ctx.lineJoin = "round";
-		ctx.strokeStyle = "#FF0000";
+		setColorType(true, [0,0.5,1],["green",'rgb(100,0,0)','rgb(0,0,100)']); 
 		ctx.beginPath();
 		
 		for (i = 0; i < len; i++){
 			w = 1;
 			x = len < maxChartElem ? getXForIndex((i + maxChartElem - len), maxChartElem) : getXForIndex(i, maxChartElem);
 			y = getYForValue(set[i], range.line);
-			h = y - getYForValue(0, range.line) || 1;
+			h = y - getYForValue(0, range.line);
             if(i==0) ctx.moveTo(x, y);
             else ctx.lineTo(x, y);
         }
@@ -214,11 +208,12 @@
 	function renderBarChart(set) {
 	    var i, a, x, y, w, h, len;
 
-		setMinMax(set, range.bar)
+		setMinMax(set, range.bar);
 	    drawAxis([-50, -25, 0, 25, 50], range.bar);
 
 	    ctx.lineWidth = 10;
 	    ctx.lineJoin = "miter";
+	    setColorType(true, [0,1],["green",'rgb(0,0,100)']); 
 
 	    len = set.length;
 
@@ -226,9 +221,9 @@
 	        w = 1;
             x = len < maxChartElem ? getXForIndex((i + maxChartElem - len), maxChartElem) : getXForIndex(i, maxChartElem);
 	        y = getYForValue(set[i], range.bar);
-	        h = y - getYForValue(0, range.bar) || 1;
+	        h = y - getYForValue(0, range.bar);
 
-	        ctx.fillStyle = "#FF0000";
+	        //ctx.fillStyle = "#FF0000";
 	        ctx.fillRect(x, y - h, w*(getXInterval(maxChartElem)-2), h);
 		}
 	 }
@@ -247,6 +242,7 @@
 		elem.width = elem.width;
 
 		try {
+			//setMinMax(data[type], type);
 			renderers[type](data[type]);
 		} catch (e) {
 			console.error(e.message);
