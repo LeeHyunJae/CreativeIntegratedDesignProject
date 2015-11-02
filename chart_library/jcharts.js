@@ -207,7 +207,7 @@
 
   // render line chart function 
 	function renderLineChart(set) {
-		var i, x, y, len, gradient;
+		var i, x, y, len, gradient, cx, cy;
 
 		setMinMax(set, range.line);
 		setBackground(true, [0,1], ["#002b33","#0080cc"]);
@@ -221,45 +221,59 @@
 		setColorType(true, [0,1],["#ff8033","#ffd533"]);
 		//setColorType(true, [0,0.5,1],["green",'rgb(100,0,0)','rgb(0,0,100)']); 
 		ctx.beginPath();
-		
-		for (i = 0; i < len; i++){
-			w = 1;
+
+		for(i = 0; i < len; i++){
 			x = len < maxChartElem ? getXForIndex((i + maxChartElem - len), maxChartElem) : getXForIndex(i, maxChartElem);
 			x += 0.5*getXInterval(maxChartElem);
 			y = getYForValue(set[i], range.line);
-			h = y - getYForValue(0, range.line);
-        if(i==0) ctx.moveTo(x, y);
-        else ctx.lineTo(x, y);
-    }
+			cx = x - 0.5*((width - 2 * offset) / elem_number);
+			if(i==0) ctx.moveTo(x, y);
+        	else{
+				ctx.bezierCurveTo(cx,cy,cx,y,x,y);
+			}
+			cy = y;
+		}
+		ctx.stroke();
 
-        ctx.stroke();
+		/*
+		   for (i = 0; i < len; i++){
+		   w = 1;
+		   x = len < maxChartElem ? getXForIndex((i + maxChartElem - len), maxChartElem) : getXForIndex(i, maxChartElem);
+		   x += 0.5*getXInterval(maxChartElem);
+		   y = getYForValue(set[i], range.line);
+		   h = y - getYForValue(0, range.line);
+		   if(i==0) ctx.moveTo(x, y);
+		   else ctx.lineTo(x, y);
+		   }
+
+		   ctx.stroke();*/
 	}
 
 	// render bar chart function
 	function renderBarChart(set) {
-	  var i, a, x, y, w, h, len;
+		var i, a, x, y, w, h, len;
 
 		setMinMax(set, range.bar);
-	  setBackground(true, [0,1], ["#002b33","#0080cc"]);
+		setBackground(true, [0,1], ["#002b33","#0080cc"]);
 		//setBackground(true, [0,0.5,1], ["white","#f2f2f2","white"]);
 		drawAxis([0,20,40,60,80,100], range.bar);
 
-	  ctx.lineWidth = 10;
-	  ctx.lineJoin = "miter";
-	  setColorType(true, [0,1],["#ff8033","#ffd533"]); 
+		// ctx.lineWidth = 10;
+		// ctx.lineJoin = "miter";
+		setColorType(true, [0,1],["#ff8033","#ffd533"]); 
 
-	  len = set.length;
+		len = set.length;
 
-    for (i = 0; i < set.length; i++) {
-       w = 1;
-       x = len < maxChartElem ? getXForIndex((i + maxChartElem - len), maxChartElem) : getXForIndex(i, maxChartElem);
-       y = getYForValue(set[i], range.bar);
-       h = y - getYForValue(0, range.bar);
+		for (i = 0; i < set.length; i++) {
+			w = 1;
+			x = len < maxChartElem ? getXForIndex((i + maxChartElem - len), maxChartElem) : getXForIndex(i, maxChartElem);
+			y = getYForValue(set[i], range.bar);
+			h = y - getYForValue(0, range.bar);
 
-       //ctx.fillStyle = "#FF0000";
-       ctx.fillRect(x, y - h, w*(getXInterval(maxChartElem)-8), h);
+			//ctx.fillStyle = "#FF0000";
+			ctx.fillRect(x, y - h, w*(getXInterval(maxChartElem)-8), h);
 		}
-	 }
+	}
 
 	// Initiation functions
 	function init(elem) {
