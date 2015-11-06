@@ -184,30 +184,34 @@
 	// Render pie chart function
 	function renderPieChart() {
 		var i, x, y, r, a1, a2, sum;
-	
+		var tmp_set = [20, 40, 60, 70];
+		var tmp_color = ["#ff8033","#ffb111","#ffc111","#ffd5dd"];
+
 		x = width / 2;
 		y = height / 2;
-		r = Math.min(x, y) - 2;
+		r = 250;
 		a1 = 1.5 * Math.PI;
 		a2 = 0;
-		sum = sumSet(set);
+		sum = sumSet(tmp_set);
 
 		for (i = 0; i < set.length; i++) {
-			ctx.fillStyle = colors[i];
 			ctx.beginPath();
 			a2 = a1 + (set[i] / sum) * (2 * Math.PI);
 
-			// TODO opts.wedge
 			ctx.arc(x, y, r, a1, a2, false);
 			ctx.lineTo(x, y);
+			ctx.fillStyle = tmp_color[i];
 			ctx.fill();
+			ctx.stroke();
 			a1 = a2;
 		}
+		ctx.stroke();
 	}
 
   // render line chart function 
 	function renderLineChart(set) {
 		var i, x, y, len, gradient, cx, cy;
+		var shape = "smooth";
 
 		setMinMax(set, range.line);
 		setBackground(true, [0,1], ["#002b33","#0080cc"]);
@@ -226,27 +230,20 @@
 			x = len < maxChartElem ? getXForIndex((i + maxChartElem - len), maxChartElem) : getXForIndex(i, maxChartElem);
 			x += 0.5*getXInterval(maxChartElem);
 			y = getYForValue(set[i], range.line);
-			cx = x - 0.5*((width - 2 * offset) / elem_number);
-			if(i==0) ctx.moveTo(x, y);
-        	else{
-				ctx.bezierCurveTo(cx,cy,cx,y,x,y);
+			if(shape == "smooth"){
+				cx = x - 0.5*getXInterval(maxChartElem);
+				if(i==0) ctx.moveTo(x, y);
+				else{
+					ctx.bezierCurveTo(cx,cy,cx,y,x,y);
+				}
+				cy = y;
 			}
-			cy = y;
+			else{
+				if(i==0) ctx.moveTo(x,y);
+				else ctx.lineTo(x,y);
+			}
 		}
 		ctx.stroke();
-
-		/*
-		   for (i = 0; i < len; i++){
-		   w = 1;
-		   x = len < maxChartElem ? getXForIndex((i + maxChartElem - len), maxChartElem) : getXForIndex(i, maxChartElem);
-		   x += 0.5*getXInterval(maxChartElem);
-		   y = getYForValue(set[i], range.line);
-		   h = y - getYForValue(0, range.line);
-		   if(i==0) ctx.moveTo(x, y);
-		   else ctx.lineTo(x, y);
-		   }
-
-		   ctx.stroke();*/
 	}
 
 	// render bar chart function
