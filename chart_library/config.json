@@ -1,10 +1,12 @@
 {
 	"line": {
-		"maxLength": "20"
+		"maxLength": "20",
+		"offset": "2"
 	},
 
 	"bar": {
-		"maxLength": "20"
+		"maxLength": "20",
+		"offset": "2"
 	},
 
 	"pie": {

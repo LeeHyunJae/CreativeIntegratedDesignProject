@@ -1,7 +1,8 @@
 // Modules
 var fs = require('fs');
-var mysql = require('mysql');
 var mqtt = require('mqtt');
+var moment = require('moment');
+var mysql = require('./mysql');
 
 // Useful functions
 function push(data, config, type, elem) {
@@ -21,13 +22,7 @@ function writeData(data) {
 var client = mqtt.connect('tcp://chart.kr.pe');
 
 // Connect to MYSQL
-var connection = mysql.createConnection({
-  host: 'localhost',
-  user: 'root',
-  password: '',
-  database: 'web_chart'
-});
-connection.connect();
+var connection = mysql.connection;
 
 // Read config
 var config = {};
@@ -53,24 +48,6 @@ for (var type in data) {
 	})(type);
 }
 
-// Useful functions
-function getTime() {
-	var currentDate = new Date();
-	var timezone =
-		currentDate.getTime() + (currentDate.getTimezoneOffset() * 60000) + (9 * 3600000);
-	currentDate.setTime(timezone);
-
-	var dateTime =
-		currentDate.getFullYear() + "/" +
-		(currentDate.getMonth() + 1) + "/" +
-		currentDate.getDate() + " " +
-		currentDate.getHours() + ":" +
-		currentDate.getMinutes() + ":" +
-		currentDate.getSeconds();
-
-	return dateTime;
-}
-
 // Set MQTT callback functions
 client.on('connect', function () {
 	console.log('MQTT connected');
@@ -79,7 +56,7 @@ client.on('connect', function () {
 
 client.on('message', function (topic, message) {
 	var newData = JSON.parse(message);
-	newData.time = getTime();
+	newData.time = moment().format("YYYY-MM-DD HH:mm:ss");
 
 	push(data, config, newData.type, newData.value);
 	writeData(data);
@@ -88,5 +65,4 @@ client.on('message', function (topic, message) {
 	var query = connection.query(str, newData, function(err, result) {
 		if (err) throw err;
 	});
-	// console.log(query.sql);
 });
