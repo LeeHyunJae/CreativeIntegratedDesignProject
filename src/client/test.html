@@ -1,0 +1,19 @@
+<html>
+	<head>
+		<title>Test</title>
+		<meta charset="UTF-8">
+		<style>
+			canvas {
+				border: 1px solid #ddd;
+			}
+		</style>
+	</head>
+	<body>
+		<canvas id="test" class="jchart" data-type="line" width="500" height="500"></canvas>
+	</body>
+	<script src="chart.js"></script>
+	<script src="front.js"></script>
+	<script>
+		setInterval(function() {JCFront.render()}, 1000);
+	</script>
+</html>
