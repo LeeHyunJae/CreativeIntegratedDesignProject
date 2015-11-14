@@ -46,6 +46,14 @@
 			obj.maxChartElem = 20;
 			obj.data = data[type];
 
+			obj.backgroundColors = [[200, 200, 200], [200, 20, 200]];
+			obj.chartColors = ["#002b33", "#0080cc"];
+			obj.backgroundGradation = false;
+			obj.chartGradation = false;
+			obj.axis = [-50, -25, 0, 25, 50];
+			obj.lineShape = "smooth"
+			obj.pieRadius = 250;
+
 			win.JCLib.draw(obj);
 		}
 	}

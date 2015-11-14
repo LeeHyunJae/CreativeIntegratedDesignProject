@@ -1,11 +1,33 @@
 (function (win) {
 	var ctx, type, range, width, height, renderers, offset, maxChartElem;
+	var backgroundColors, chartColors, chartGradation, axis, lineShape;
+	var colorNum, pieRadius;
 
 	renderers = {
 		"line" : renderLineChart,
 		"bar" : renderBarChart,
 		"pie" : renderPieChart
 	};
+
+	function printAll() {
+		console.log("------------------------");
+		console.log("ctx: " + ctx);
+		console.log("type: " + type);
+		console.log("range: " + range);
+		console.log("width: " + width);
+		console.log("height: " + height);
+		console.log("renderers: " + renderers);
+		console.log("offset: " + offset);
+		console.log("maxChartElem: " + maxChartElem);
+		console.log("backgroundColors: " + backgroundColors);
+		console.log("chartColors: " + chartColors);
+		console.log("chartGradation: " + chartGradation);
+		console.log("axis: " + axis);
+		console.log("lineShape: " + lineShape);
+		console.log("colorNum: " + colorNum);
+		console.log("pieRadius: " + pieRadius);
+		console.log("------------------------");
+	}
 
 	// Drawing line chart functions
 	function getXInterval(elem_number) {
@@ -18,14 +40,14 @@
 	}
 
 	// return y coordinate for input value
-	function getYForValue(val, range) {
+	function getYForValue(val) {
 		var h = height - 2 * offset;
 
 		return h - (h * ((val - range[0]) / (range[1] - range[0]))) + offset;
 	}
 
 	// draw axis function
-	function drawAxis(vals, range) {
+	function drawAxis(vals) {
 		var i, val, h;
 
 		for (i = 0; i < vals.length; i++) {
@@ -76,60 +98,66 @@
 	}
 
   // convert out of range values to max or min values
-	function setMinMax(set, range) {
-		for (var i = 0; i < set.length; i++) {
-			if (set[i] < range[0]) set[i] = range[0];
-			else if (set[i] > range[1]) set[i] = range[1];
+	function setMinMax() {
+		for (var i = 0; i < data.length; i++) {
+			if (data[i] < range[0]) data[i] = range[0];
+			else if (data[i] > range[1]) data[i] = range[1];
 		}
 	}
  
 	// set graph color type optionally
-	function setColorType(grad, section, color){
+	function setColorType(grad, color){
 		var i, len, gradient;
 		
 		if(grad){
-			len = section.length;
-			gradient = ctx.createLinearGradient(0,0,0,height);
-			
-			for(i=0; i<len; i++){
-				gradient.addColorStop(section[i], color[i]);
+			if(type != "pie"){
+				gradient = ctx.createLinearGradient(0,0,0,height);
+				gradient.addColorStop([0,1], ["white", color]);
 			}
-			
+			else{
+				gradient = ctx.createRadialGradient(0,0,0,0,0,pieRadius);
+			  
+				gradient.addColorStop(0,color);
+				gradient.addColorStop(1,"white");
+			}
 			ctx.strokeStyle = gradient;
 			ctx.fillStyle = gradient;
 		}
 		else{
-			ctx.strokeStyle = color[0];
-			ctx.fillStyle = color[0];
+			ctx.strokeStyle = color;
+			ctx.fillStyle = color;
 		}
 	}
 
-	function setBackground(grad, section, color, opacity) {
-		//ctx.globalAlpha = opacity;
-		setColorType(grad, section, color);
+	function setBackground(grad, color) {
+		setColorType(grad, color);
 		ctx.fillRect(0,0,width,height);		
 	}
 
 	// Render pie chart function
 	function renderPieChart() {
-		var i, x, y, r, a1, a2, sum;
-		var tmp_set = [20, 40, 60, 70];
-		var tmp_color = ["#ff8033","#ffb111","#ffc111","#ffd5dd"];
+		var i, x, y, a1, a2, sum;
+		
+		var tmp_set = [20, 40, 60]; // 3 part of data
+		var tmp_color = ["#ff8033","#ffb111","#ffc111"]; //pie color
+		
+		setBackground(backgroundGradation, getColor("background",0));
 
 		x = width / 2;
 		y = height / 2;
-		r = 250;
+		
 		a1 = 1.5 * Math.PI;
 		a2 = 0;
+		
 		sum = sumSet(tmp_set);
 
-		for (i = 0; i < set.length; i++) {
+		for (i = 0; i < data.length; i++) {
 			ctx.beginPath();
-			a2 = a1 + (set[i] / sum) * (2 * Math.PI);
+			a2 = a1 + (data[i] / sum) * (2 * Math.PI);
 
-			ctx.arc(x, y, r, a1, a2, false);
+			ctx.arc(x, y, pieRadius, a1, a2, false);
 			ctx.lineTo(x, y);
-			ctx.fillStyle = tmp_color[i];
+			setColorType(chartGradation, getColor("chart", (i % colorNum)));
 			ctx.fill();
 			ctx.stroke();
 			a1 = a2;
@@ -138,28 +166,34 @@
 	}
 
   // render line chart function 
-	function renderLineChart(set) {
+	function renderLineChart() {
 		var i, x, y, len, gradient, cx, cy;
-		var shape = "smooth";
 
-		setMinMax(set, range);
-		setBackground(true, [0,1], ["#002b33","#0080cc"]);
-		//setBackground(true, [0,0.5,1], ["white","#f2f2f2","white"]);
-		drawAxis([-50,-25,0,25,50], range);
+		setMinMax();
+		setBackground(backgroundGradation, getColor("background",0));
+		drawAxis(axis);
 
-		len = set.length;
+		len = data.length;
 
 		ctx.lineWidth = 3;
 		ctx.lineJoin = "round";
-		setColorType(true, [0,1],["#ff8033","#ffd533"]);
-		//setColorType(true, [0,0.5,1],["green",'rgb(100,0,0)','rgb(0,0,100)']); 
-		ctx.beginPath();
+	
+//		printAll();
 
+
+		ctx.beginPath();
 		for(i = 0; i < len; i++){
-			x = len < maxChartElem ? getXForIndex((i + maxChartElem - len), maxChartElem) : getXForIndex(i, maxChartElem);
+			if(len < maxChartElem) {
+				x = getXForIndex((i + maxChartElem - len), maxChartElem);
+			} else {
+				x = getXForIndex(i, maxChartElem);
+			}
+
 			x += 0.5*getXInterval(maxChartElem);
-			y = getYForValue(set[i], range);
-			if(shape == "smooth"){
+			y = getYForValue(data[i]);
+			setColorType(chartGradation, getColor("chart", (i % colorNum)));
+
+			if(lineShape == "smooth"){
 				cx = x - 0.5*getXInterval(maxChartElem);
 				if(i==0) ctx.moveTo(x, y);
 				else{
@@ -174,31 +208,82 @@
 		}
 		ctx.stroke();
 	}
-
+	
 	// render bar chart function
-	function renderBarChart(set) {
+	function renderBarChart() {
 		var i, a, x, y, w, h, len;
 
-		setMinMax(set, range);
-		setBackground(true, [0,1], ["#002b33","#0080cc"]);
-		//setBackground(true, [0,0.5,1], ["white","#f2f2f2","white"]);
-		drawAxis([0,20,40,60,80,100], range);
+		setMinMax();
+		setBackground(background_gradation, getColor("background", 0));
+		drawAxis(axis);
 
 		// ctx.lineWidth = 10;
 		// ctx.lineJoin = "miter";
-		setColorType(true, [0,1],["#ff8033","#ffd533"]); 
 
-		len = set.length;
+		len = data.length;
 
-		for (i = 0; i < set.length; i++) {
+		for (i = 0; i < len; i++) {
 			w = 1;
-			x = len < maxChartElem ? getXForIndex((i + maxChartElem - len), maxChartElem) : getXForIndex(i, maxChartElem);
-			y = getYForValue(set[i], range);
-			h = y - getYForValue(0, range);
 
-			//ctx.fillStyle = "#FF0000";
+			if(len < maxChartElem) x = getXForIndex((i + maxChartElem - len), maxChartElem);
+			else x = getXForIndex(i, maxChartElem);
+			//x = len < maxChartElem ? getXForIndex((i + maxChartElem - len), maxChartElem) : getXForIndex(i, maxChartElem);
+			y = getYForValue(data[i]);
+			h = y - getYForValue(0);
+			
+		  setColorType(chartGradation, getColor("chart", (i % colorNum))); 
 			ctx.fillRect(x, y - h, w*(getXInterval(maxChartElem)-8), h);
 		}
+	}
+	
+ 
+	function isHex(data_){
+		
+		if( typeof data_ == "string" ){
+			if(data_.charAt(0) == '#') return true;
+			else{
+				console.log("Wrong color type");
+				return false;
+			}
+		}
+		else return false;
+	
+	}
+
+	function HexToRGB(hexData){
+		var c = hexData.match(/\w/g);
+		var n;
+
+		if(c.length === 3){
+			c = [c[0],c[0],c[1],c[1],c[2],c[2]];
+		}
+
+		n = +("0x" + c.join(""));
+
+		return {
+			r : (n & 0xFF0000) >> 16,
+			g : (n & 0X00FF00) >> 8,
+			b : (n & 0X0000FF),
+			a : 1
+		};
+	}
+
+	function getColor(a, nth_color){
+		var color_type, color, rgb_color;
+	
+    if( a == "chart" ) color_type = chartColors;
+		else if( a == "background" ) color_type = backgroundColors;
+		
+	  color = color_type[nth_color]; 
+					 
+  	if(isHex(color)){
+			 rgb_color = HexToRGB(color);
+			 return "rgba("+rgb_color.r+", "+rgb_color.g+", "+rgb_color.b+", "+ rgb_color.a+")";
+		}
+		else{
+			 if(color.length == 4) return "rgba("+color[0]+", "+color[1]+", "+color[2]+", "+color[3]+")";
+			 else return "rgba("+color[0]+", "+color[1]+", "+color[2]+", 1)";
+   	}
 	}
 
 	var JCLib = {
@@ -211,6 +296,16 @@
 			range = obj.range;
 			offset = obj.offset;
 			maxChartElem = obj.maxChartElem;
+
+	    backgroundColors = obj.backgroundColors;
+			chartColors = obj.chartColors;
+			backgroundGradation = obj.backgroundGradation;
+			chartGradation  = obj.chartGradation;
+			axis = obj.axis;
+			lineShape = obj.lineShape;
+			pieRadius = obj.pieRadius;    
+
+			colorNum = chartColors.length;
 
 			renderers[type](data);
 		}
