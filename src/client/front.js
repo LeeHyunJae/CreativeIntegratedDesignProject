@@ -3,7 +3,7 @@
 
 	function getData() {
     var xmlHttp = new XMLHttpRequest();
-		var address = 'http://chart.kr.pe/project/chart_library/data.json';
+		var address = 'http://chart.kr.pe/jaemin/src/client/data.json';
 
 		xmlHttp.onreadystatechange = function() {
 			if (xmlHttp.readyState == 4 && xmlHttp.status == 200) {
@@ -22,19 +22,32 @@
 	}
 	
 	function init(elem) {
-		var obj = {
-			type: parseAttr(elem, "data-type")[0],
-			width: elem.width,
-			height: elem.height,
-			ctx: elem.getContext("2d"),
-			data: data.line,
-			range: [-50, 50],
-			offset: 50,
-			maxChartElem: 20
-		}
+		var target, type, obj;
+
+		target = parseAttr(elem, "target")[0];
+		type = parseAttr(elem, "type")[0];		
+		obj = {};
 
 		elem.width = elem.width;
-		window.JCLib.draw(obj);
+
+		obj.target = target;
+		obj.type = type;
+		obj.width = elem.width;
+		obj.height = elem.height;
+		obj.ctx = elem.getContext("2d");
+
+		if (type == "animation") {
+			obj.theme = 1;
+
+			win.JCAnim.draw(obj);
+		} else if (type == "line" || type == "bar" || type == "pie") {
+			obj.range = [-50, 50];
+			obj.offset = 50;
+			obj.maxChartElem = 20;
+			obj.data = data[type];
+
+			win.JCLib.draw(obj);
+		}
 	}
 
 	// Get the initial data
