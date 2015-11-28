@@ -1,44 +1,66 @@
 (function(win) {
-	var	targets, ctx, width, height, paths, imgs;
+	var	targets;
+	var ctx, width, height, delay, theme;
+	var paths, imgs;
 
+	// Targets to draw
 	targets = [];
+
+	// Options received from a user
 	ctx = {};
 	width = {};
 	height = {};
-	paths = {};
+	delay = {};
+	theme = {};
+
+	// Images to draw
 	imgs = {};
 
-	delay = {
-		temp: 50,
-		heart: 100,
-		sleep: 1000
-	}
-
+	// Paths of images
 	paths = {
-		temp: [
-			"http://www.livescience.com/images/i/000/061/056/original/great-white.jpg?1389213661",
-			"http://snowbrains.com/wp-content/uploads/2015/01/great-white-up-close_6455_600x450.jpg"
-		],
-		heart: [
-			"https://upload.wikimedia.org/wikipedia/commons/thumb/f/f1/Heart_corazón.svg/2000px-Heart_corazón.svg.png",
-			"http://kids.nationalgeographic.com/content/dam/kids/photos/articles/Science/H-P/heart.jpg"
-		],
-		sleep: [
-		]
-	}
+		temp: [],
+		heart: [],
+		sleep: []
+	};
 
-	function isExist(target) {
-		return ctx[target] ? true : false;
-	}
+	// Temperature theme 0
+	paths.temp.push([
+    "http://www.livescience.com/images/i/000/061/056/original/great-white.jpg?1389213661",
+    "http://snowbrains.com/wp-content/uploads/2015/01/great-white-up-close_6455_600x450.jpg"
+	]);
 
+	// Temperature theme 1
+	paths.temp.push([
+	]);
+
+	// Heart theme 0
+	paths.heart.push([
+    "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f1/Heart_corazón.svg/2000px-Heart_corazón.svg.png",
+    "http://kids.nationalgeographic.com/content/dam/kids/photos/articles/Science/H-P/heart.jpg"
+	]);
+
+	// Heart theme 1
+	paths.heart.push([
+	]);
+
+	// Sleep theme 0
+	paths.sleep.push([
+	]);
+
+	// Sleep theme 1
+	paths.sleep.push([
+	]);
+
+	// Check if all images are loaded or not
 	function isReady(target) {
-		return imgs[target].length == paths[target].length ? true : false;
+		return imgs[target].length == paths[target][theme[target]].length ? true : false;
 	}
 
+	// Load images
 	function loadImages(target) {
 		imgs[target] = [];
 
-		paths[target].forEach(function(path) {
+		paths[target][theme[target]].forEach(function(path) {
 			var img = new Image;
 			img.onload = function() {
 				imgs[target].push(img);
@@ -46,17 +68,8 @@
 			img.src = path;
 		});
 	}
-	
-  function drawRectangle(x, y, context) {
-    context.beginPath();
-    context.rect(x, y, 10, 10);
-    context.fillStyle = '#8ED6FF';
-    context.fill();
-    context.lineWidth = 1;
-    context.strokeStyle = 'black';
-    context.stroke();
-  }
 
+	// Animate all images	
 	function animate(times, nums) {
 		var offset = 100;
 	
@@ -75,6 +88,7 @@
 		}, offset);
 	}
 
+	// API
 	var JCAnim = {
 		setup: function(obj) {
 			var target = obj.target;
@@ -83,6 +97,8 @@
 			ctx[target] = obj.ctx;
 			width[target] = obj.width;
 			height[target] = obj.height;
+			delay[target] = obj.delay;
+			theme[target] = obj.theme;
 
 			loadImages(target);
 		},

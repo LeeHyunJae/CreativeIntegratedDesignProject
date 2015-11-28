@@ -137,7 +137,9 @@
 	// Render pie chart function
 	function renderPieChart() {
 		var i, x, y, a1, a2, sum;
-		
+	
+		ctx.clearRect(0, 0, width, height);
+
 		var tmp_set = [20, 40, 60]; // 3 part of data
 		//var tmp_color = ["#ff8033","#ffb111","#ffc111"]; //pie color
 		
@@ -170,6 +172,8 @@
   // render line chart function 
 	function renderLineChart() {
 		var i, x, y, len, gradient, cx, cy;
+
+		ctx.clearRect(0, 0, width, height);
 
 		setBackground(backgroundGradation, getColor("background",0));
 		setMinMax();
@@ -212,6 +216,8 @@
 	// render bar chart function
 	function renderBarChart() {
 		var i, a, x, y, w, h, len;
+
+		ctx.clearRect(0, 0, width, height);
 
 		setBackground(backgroundGradation, getColor("background", 0));
 		setMinMax();
@@ -272,13 +278,11 @@
 	  color = color_type[nth_color]; 
 					 
   	if(isHex(color)){
-			 rgb_color = HexToRGB(color);
-			 return "rgba("+rgb_color.r+", "+rgb_color.g+", "+rgb_color.b+", "+ rgb_color.a+")";
+			rgb_color = HexToRGB(color);
+			return "rgba("+rgb_color.r+", "+rgb_color.g+", "+rgb_color.b+", "+ rgb_color.a+")";
+		} else {
+			return color;
 		}
-		else{
-			 if(color.length == 4) return "rgba("+color[0]+", "+color[1]+", "+color[2]+", "+color[3]+")";
-			 else return "rgba("+color[0]+", "+color[1]+", "+color[2]+", 1)";
-   	}
 	}
 
 	var JCLib = {
