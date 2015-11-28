@@ -65,7 +65,7 @@
  			currObj.backgroundGradation = false;
  			currObj.chartGradation = true;
  			currObj.axis = [-50, -25, 0, 25, 50];
- 			currObj.lineShape = "smooth"
+ 			currObj.lineShape = "step"
  			currObj.pieRadius = 250;
 			currObj.animation = true;
 		}
@@ -86,7 +86,7 @@
 			getData(function() {
 				drawCharts();
 			})
-		}, 5000);
+		}, 3000);
 	}
 
 	// Jcharts API

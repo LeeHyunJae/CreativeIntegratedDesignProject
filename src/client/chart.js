@@ -185,9 +185,9 @@
 
   // render line chart function 
 	function renderLineChart() {
-		var i, x, y, len, gradient, cx, cy, prevX, prevY;
-		var tempX, tempY;
+		var i, x, y, gradient, cx, cy, prevX, prevY;
 		var animationPoints, lineAnimationSpeed = 100;
+		
 		setBackground(backgroundGradation, getColor("background",0));
 		setMinMax();
 		drawAxis(axis);
@@ -198,67 +198,38 @@
 		
 			setColorType(chartGradation, getColor("chart", i%colorNum));
 			
-			if(len < maxChartElem) 	x = getXForIndex((i + maxChartElem - len), maxChartElem);
+			if(dataLen < maxChartElem) 	x = getXForIndex((i + maxChartElem - dataLen), maxChartElem);
 			else	x = getXForIndex(i, maxChartElem);
 			
 			x += 0.5*getXInterval(maxChartElem);
 			y = getYForValue(data[i]);
-			
-			if(i == dataLen- 2){
-				tempX = x;
-				tempY = y;
-			}
-			
+		
 			if(i > 0){
-			  ctx.beginPath();
-				ctx.moveTo(prevX, prevY);
-				
 				if(i == 1) cy = y;
 				
-				if(animation){
-					if(i == dataLen -1){
-						lineAnimationCnt = 1;
-						animationPoints = calcWayPoints(tempX, tempY, x, y);
-						animateLine(ctx);
-					} else {
-						ctx.lineTo(x,y);
-					}
-				}else{
-					if(lineShape == "smooth") cy = renderSmoothLine(cx, cy, x, y);
-				  else ctx.lineTo(x,y);
+				ctx.beginPath();
+				ctx.moveTo(prevX, prevY);
+				if(i == dataLen -1 && animation){
+					lineAnimationCnt = 1;
+					animationPoints = calcWayPoints(prevX, prevY, x, y);
+					animateLine(ctx);
 				}
-
+				else{
+					if(lineShape == "smooth") cy = renderSmoothLine(cx, cy, x, y);
+					else ctx.lineTo(x, y);
+				}
 			  ctx.stroke();
 			
-				ctx.beginPath();
-     		if(i == dataLen-1) ctx.arc(x,y,5,0*Math.PI, 2*Math.PI);
-				else ctx.arc(prevX,prevY,5,0*Math.PI, 2*Math.PI);
-		  	ctx.fill();
+				drawCirclePoint(prevX, prevY);
 			}
 	
 			prevX = x;
 			prevY = y;
 		}
 
-		function calcWayPoints(x0, y0, x1, y1) {
-			var waypoints = [];
-			var dx = x1 - x0;
-			var dy = y1 - y0; 
-			for(var i = 0; i <= 10; i++){
-				var x = x0 + dx * i / 10;
-				var y = y0 + dy * i / 10;
-				waypoints.push({
-					x: x,
-					y: y
-				});
-			}
-			return (waypoints);
-		}
-
 		function animateLine(ctx) {
 			
 			ctx.beginPath();
-
 			ctx.moveTo(animationPoints[lineAnimationCnt-1].x, animationPoints[lineAnimationCnt-1].y);
 			ctx.lineTo(animationPoints[lineAnimationCnt].x, animationPoints[lineAnimationCnt].y);
 			ctx.stroke();
@@ -270,6 +241,30 @@
 				}, lineAnimationSpeed);
 			}
   	}
+	}
+
+	function drawCirclePoint(x, y){
+			ctx.beginPath();
+		  ctx.arc(x, y, 5, 0*Math.PI, 2*Math.PI);
+			ctx.fill();
+	}
+
+ 	function calcWayPoints(x0, y0, x1, y1) {
+		var i, x, y, waypoints = [];
+		var dx = x1 - x0;
+		var dy = y1 - y0; 
+	
+		for(i = 0; i <= 10; i++){
+			 x = x0 + dx * i / 10;
+			 y = y0 + dy * i / 10;
+			
+			 waypoints.push({
+				x: x,
+				y: y
+			});
+		}
+
+		return (waypoints);
 	}
 
 	function setLineStyle(w,j){
@@ -286,8 +281,8 @@
 
 	// render bar chart function
 	function renderBarChart() {
-		var i, a, x, y, w, h, len;
-		var barAnimationCnt, barAnimationSpeed = 50;
+		var i, a, x, y, w, h, barAnimationCnt = 0;
+
 		setBackground(backgroundGradation, getColor("background", 0));
 		setMinMax();
 		drawAxis(axis);
@@ -295,7 +290,7 @@
 		for (i = 0; i < dataLen; i++){
 			w = 1;
 
-			if(len < maxChartElem) x = getXForIndex((i + maxChartElem - len), maxChartElem);
+			if(dataLen < maxChartElem) x = getXForIndex((i + maxChartElem - dataLen), maxChartElem);
 			else x = getXForIndex(i, maxChartElem);
 
 			y = getYForValue(data[i]);
@@ -303,28 +298,22 @@
 			
 			setColorType(chartGradation, getColor("chart", (i % colorNum))); 
 		
-			if(animation && i == dataLen - 1){
-				barAnimationCnt = 0;
-				animateBar(x, y, h, ctx);	
-			} 
-			else{
-				ctx.fillRect(x, y - h, w*(getXInterval(maxChartElem)-8), h);
-			}
-		}
+			if(i == dataLen-1 && animation) animateBar(x, y, h, ctx, barAnimationCnt);	
+		  else ctx.fillRect(x, y - h, w*(getXInterval(maxChartElem)-8), h);
+	  }
+	}
 
-		function animateBar(x, y, h, ctx) {
+	function animateBar(x, y, h, ctx, cnt){
+    var w = 1;
+		var renderedH = h * cnt / 10;
 
-			renderedY = y - h * (10 - barAnimationCnt) / 10;
-			renderedH = h * barAnimationCnt / 10;
-	
-			ctx.fillRect(x, y-h , w*(getXInterval(maxChartElem)-8), renderedH);
-			
-			if (barAnimationCnt < 10) {
-				barAnimationCnt++;
-				setTimeout(function() {
-					animateBar(x, y, h, ctx);
-				}, barAnimationSpeed);
-			}
+		ctx.fillRect(x, y - h, w*(getXInterval(maxChartElem) - 8), renderedH);
+
+		if(cnt < 10){
+			cnt++;
+			setTimeout(function() { 
+				animateBar(x, y, h, ctx, cnt);
+			}, 50);
 		}
 	}
 
