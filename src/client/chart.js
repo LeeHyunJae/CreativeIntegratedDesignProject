@@ -108,37 +108,35 @@
 	}
 
   function setGradColor(color){
-		var splitParen, splitComma,r,g,b,a;
-	  //rgba(123,234,234,1)
+		var splitParen, splitComma, gradColor, r, g, b, a;
+		
 		splitParen = color.split("(");
 		splitParen = splitParen[1].split(")");
 		splitComma = splitParen[0].split(",");
 
-		r = parseInt(splitComma[0]);
-		g = parseInt(splitComma[1]);
-		b = parseInt(splitComma[2]);
+		r = parseInt(splitComma[0])/8;
+		g = parseInt(splitComma[1])/8;
+		b = parseInt(splitComma[2])/8;
 		a = parseInt(splitComma[3]);
 
-		return "rgba(" + 0.5*r + "," + 0.5*g + "," + 0.5*b + "," + a + ")";
+	  gradColor = "rgba(" + Math.trunc(r) + "," + Math.trunc(g) + "," + Math.trunc(b) + "," + a + ")";
+  
+		return gradColor;
 	}
 
 	// set graph color type optionally
 	function setColorType(grad, color){
 		var i, gradient;
-		
-		if(grad){
+	
+		if(grad){			
 			if(isHex(color)) color = HexToRGB(color);
-			if(type != "pie"){
-				gradient = ctx.createLinearGradient(0,0,0,height);
-				gradient.addColorStop(0, color);
-				gradient.addColorStop(1, "white");
-			}
-			else{
-				gradient = ctx.createRadialGradient(width/2,height/2,0,width/2,height/2,pieRadius);
-			  
-				gradient.addColorStop(0,color);
-				gradient.addColorStop(1, "white");
-			}
+			
+			if(type == "pie") gradient = ctx.createRadialGradient(width/2, height/2, 0, width/2, height/2, pieRadius);
+			else gradient = ctx.createLinearGradient(0,0,0,height);
+			
+			gradient.addColorStop(0, color);
+		  gradient.addColorStop(1, setGradColor(color));
+
 			ctx.strokeStyle = gradient;
 			ctx.fillStyle = gradient;
 		}
@@ -155,15 +153,14 @@
 
 	// Render pie chart function
 	function renderPieChart() {
-		var i, x, y, a1, a2, sum;
+		var i, centerX, centerY, a1, a2, sum;
 	
 		var tmp_set = [20, 40, 60]; // 3 part of data
-		//var tmp_color = ["#ff8033","#ffb111","#ffc111"]; //pie color
 		
 		setBackground(backgroundGradation, getColor("background",0));
 
-		x = width / 2;
-		y = height / 2;
+		centerX = width / 2;
+		centerY = height / 2;
 		
 		a1 = 1.5 * Math.PI;
 		a2 = 0;
@@ -174,8 +171,8 @@
 			ctx.beginPath();
 			
 			a2 = a1 + (tmp_set[i] / sum) * (2 * Math.PI);
-			ctx.arc(x, y, pieRadius, a1, a2, false);
-			ctx.lineTo(x, y);
+			ctx.arc(centerX, centerY, pieRadius, a1, a2, false);
+			ctx.lineTo(centerX, centerY);
 
 			setColorType(chartGradation, getColor("chart", (i % colorNum)));
 			
@@ -194,7 +191,7 @@
 		setBackground(backgroundGradation, getColor("background",0));
 		setMinMax();
 		drawAxis(axis);
-
+		
 		setLineStyle(3, "round");
 
 		for(i = 0; i < dataLen; i++){
@@ -226,17 +223,15 @@
 					} else {
 						ctx.lineTo(x,y);
 					}
-				} else if(lineShape == "smooth"){
-					cy = renderSmoothLine(cx, cy, x, y);
-				}	else {
-					ctx.lineTo(x,y);
+				}else{
+					if(lineShape == "smooth") cy = renderSmoothLine(cx, cy, x, y);
+				  else ctx.lineTo(x,y);
 				}
 
 			  ctx.stroke();
 			
 				ctx.beginPath();
-     		
-				if(i == dataLen-1) ctx.arc(x,y,5,0*Math.PI, 2*Math.PI);
+     		if(i == dataLen-1) ctx.arc(x,y,5,0*Math.PI, 2*Math.PI);
 				else ctx.arc(prevX,prevY,5,0*Math.PI, 2*Math.PI);
 		  	ctx.fill();
 			}
@@ -244,6 +239,7 @@
 			prevX = x;
 			prevY = y;
 		}
+
 		function calcWayPoints(x0, y0, x1, y1) {
 			var waypoints = [];
 			var dx = x1 - x0;
@@ -273,9 +269,7 @@
 					animateLine(ctx);
 				}, lineAnimationSpeed);
 			}
-
-		}
-
+  	}
 	}
 
 	function setLineStyle(w,j){
@@ -307,21 +301,19 @@
 			y = getYForValue(data[i]);
 			h = y - getYForValue(0);
 			
+			setColorType(chartGradation, getColor("chart", (i % colorNum))); 
+		
 			if(animation && i == dataLen - 1){
 				barAnimationCnt = 0;
-
-				setColorType(chartGradation, getColor("chart", (i % colorNum))); 
 				animateBar(x, y, h, ctx);	
-
-			} else{
-				
-				setColorType(chartGradation, getColor("chart", (i % colorNum))); 
+			} 
+			else{
 				ctx.fillRect(x, y - h, w*(getXInterval(maxChartElem)-8), h);
 			}
 		}
+
 		function animateBar(x, y, h, ctx) {
 
-			//console.log("after :" +x+ "===" + y + "===="+ w +"===="+h);
 			renderedY = y - h * (10 - barAnimationCnt) / 10;
 			renderedH = h * barAnimationCnt / 10;
 	
@@ -333,19 +325,11 @@
 					animateBar(x, y, h, ctx);
 				}, barAnimationSpeed);
 			}
-
 		}
-
 	}
 
 	function isHex(data_){
-
-		if( typeof data_ == "string" ){
-			if(data_.charAt(0) == '#') return true;
-			else{
-				return false;
-			}
-		}
+		if(data_.charAt(0) == '#') return true;
 		else return false;
 	}
 
@@ -372,17 +356,17 @@
 
 		if( a == "chart" ) colorType = chartColors;
 		else if( a == "background" ) colorType = backgroundColors;
-
-		color = colorType[nthColor]; 
-
-		if(isHex(color)){
+		
+	  color = colorType[nthColor]; 
+		
+  	if(isHex(color)){
 			rgb_color = HexToRGB(color);
 			return "rgba("+rgb_color.r+", "+rgb_color.g+", "+rgb_color.b+", "+ rgb_color.a+")";
 		}
 		else{
-			if(color.split("(")[0].length == 4) return color;
-			else return ( color.split(")")[0] + ",1)" );
-		}
+			 if(color.split("(")[0].length == 4) return color;
+			 else  return "rgba(" + color.split("(")[1].split(")")[0] + ", 1)";
+   	}
 	}
 
 	var JCLib = {
@@ -395,9 +379,8 @@
 			range = obj.range;
 			offset = obj.offset;
 			maxChartElem = obj.maxChartElem;
-
-			dataLen = data.length;
-
+	   	dataLen = data.length;
+	    
 			backgroundColors = obj.backgroundColors;
 			chartColors = obj.chartColors;
 			backgroundGradation = obj.backgroundGradation;
@@ -411,6 +394,5 @@
 			renderers[type](data);
 		}
 	}
-
 	win.JCLib = JCLib;
 })(window);

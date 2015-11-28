@@ -7,12 +7,11 @@
 	// Get data from the json file in the local server
 	function getData(callback) {
     var xmlHttp = new XMLHttpRequest();
-		var address = 'http://chart.kr.pe/jaedong/src/client/haha.json';
+		var address = 'http://chart.kr.pe/jaedong/src/client/data.json';
 
 		xmlHttp.onreadystatechange = function() {
 			if (xmlHttp.readyState == 4 && xmlHttp.status == 200) {
 				data = JSON.parse(xmlHttp.responseText);
-				console.log(data)
 				callback();
 			} 
 		};
@@ -61,10 +60,10 @@
 			currObj.range = (range = parseAttrs(elem, "range")) ? range : [-50, 50];
 			currObj.offset = (offset = parseAttr(elem, "offset")) ? offset : 50;
 			currObj.maxChartElem = (max = parseAttr(elem, "max")) ? max : 20;
- 			currObj.backgroundColors = ["rgba(100, 150, 200, 1)"]//["rgba(200, 200, 200, 1)", "rgba(200, 20, 200, 1)"];
- 			currObj.chartColors = ["#002b33", "#0080cc"];
+ 			currObj.backgroundColors = ["rgb(200, 200, 200)"];
+ 			currObj.chartColors = ["#002b33", "#0080cc", "#0054cc"];
  			currObj.backgroundGradation = false;
- 			currObj.chartGradation = false;
+ 			currObj.chartGradation = true;
  			currObj.axis = [-50, -25, 0, 25, 50];
  			currObj.lineShape = "smooth"
  			currObj.pieRadius = 250;
@@ -78,9 +77,7 @@
 				if (type == "animation") continue;
 				var currObj = obj[target][type];
 
-			//	console.log(data[target])
 				currObj.data = data[target][type];
-				//console.log(type + " " + currObj.backgroundColors);
 				win.JCLib.draw(currObj);
 			}
 		}
@@ -89,7 +86,7 @@
 			getData(function() {
 				drawCharts();
 			})
-		}, 1000);
+		}, 5000);
 	}
 
 	// Jcharts API
