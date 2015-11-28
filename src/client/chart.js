@@ -63,7 +63,7 @@
 			drawDotLine(offset, width - offset, h);
 		}
 		
-		ctx.fillText("-20s", 40, height-20); 
+		ctx.fillText("-20s", 50, height-20); 
 		ctx.fillText("-10s", 0.5*width-55, height-20);
 		ctx.fillText("now", width-95, height-20);
 	}
@@ -104,21 +104,38 @@
 			else if (data[i] > range[1]) data[i] = range[1];
 		}
 	}
- 
+
+  function setGradColor(color){
+		var splitParen, splitComma,r,g,b,a;
+	  //rgba(123,234,234,1)
+		splitParen = color.split("(");
+		splitParen = splitParen[1].split(")");
+		splitComma = splitParen[0].split(",");
+
+		r = parseInt(splitComma[0]);
+		g = parseInt(splitComma[1]);
+		b = parseInt(splitComma[2]);
+		a = parseInt(splitComma[3]);
+
+		return "rgba(" + 0.5*r + "," + 0.5*g + "," + 0.5*b + "," + a + ")";
+	}
+
 	// set graph color type optionally
 	function setColorType(grad, color){
 		var i, gradient;
 		
 		if(grad){
+			if(isHex(color)) color = HexToRGB(color);
 			if(type != "pie"){
 				gradient = ctx.createLinearGradient(0,0,0,height);
-				gradient.addColorStop([0,1], ["white", color]);
+				gradient.addColorStop(0, color);
+				gradient.addColorStop(1, "white");
 			}
 			else{
-				gradient = ctx.createRadialGradient(0,0,0,0,0,pieRadius);
+				gradient = ctx.createRadialGradient(width/2,height/2,0,width/2,height/2,pieRadius);
 			  
 				gradient.addColorStop(0,color);
-				gradient.addColorStop(1,"white");
+				gradient.addColorStop(1, "white");
 			}
 			ctx.strokeStyle = gradient;
 			ctx.fillStyle = gradient;
@@ -138,8 +155,6 @@
 	function renderPieChart() {
 		var i, x, y, a1, a2, sum;
 	
-		ctx.clearRect(0, 0, width, height);
-
 		var tmp_set = [20, 40, 60]; // 3 part of data
 		//var tmp_color = ["#ff8033","#ffb111","#ffc111"]; //pie color
 		
@@ -153,7 +168,7 @@
 		
 		sum = sumSet(tmp_set);
 
-		for (i = 0; i < 3; i++) {
+		for (i = 0; i < tmp_set.length; i++) {
 			ctx.beginPath();
 			
 			a2 = a1 + (tmp_set[i] / sum) * (2 * Math.PI);
@@ -171,9 +186,7 @@
 
   // render line chart function 
 	function renderLineChart() {
-		var i, x, y, len, gradient, cx, cy;
-
-		ctx.clearRect(0, 0, width, height);
+		var i, x, y, len, gradient, cx, cy, prevX, prevY;
 
 		setBackground(backgroundGradation, getColor("background",0));
 		setMinMax();
@@ -181,24 +194,35 @@
 
 		setLineStyle(3, "round");
 
-		ctx.beginPath();
 		for(i = 0; i < dataLen; i++){
+		
+			setColorType(chartGradation, getColor("chart", i%colorNum));
 			
 			if(len < maxChartElem) 	x = getXForIndex((i + maxChartElem - len), maxChartElem);
 			else	x = getXForIndex(i, maxChartElem);
-		
+			
 			x += 0.5*getXInterval(maxChartElem);
 			y = getYForValue(data[i]);
 			
-			setColorType(chartGradation, getColor("chart", (i % colorNum)));
-
-			if(i == 0) ctx.moveTo(x,y);
 			if(i > 0){
-					if(lineShape == "smooth") cy = renderSmoothLine(cx, cy, x, y);
-					else ctx.lineTo(x,y);
+			  ctx.beginPath();
+				ctx.moveTo(prevX, prevY);
+				
+				if(i == 1) cy = y;
+				if(lineShape == "smooth") cy = renderSmoothLine(cx, cy, x, y);
+				else ctx.lineTo(x,y);
+        	
+			  ctx.stroke();
+			
+				ctx.beginPath();
+     		if(i == dataLen-1) ctx.arc(x,y,5,0*Math.PI, 2*Math.PI);
+				else ctx.arc(prevX,prevY,5,0*Math.PI, 2*Math.PI);
+		  	ctx.fill();
 			}
+	
+			prevX = x;
+			prevY = y;
 		}
-		ctx.stroke();
 	}
 
 	function setLineStyle(w,j){
@@ -217,13 +241,11 @@
 	function renderBarChart() {
 		var i, a, x, y, w, h, len;
 
-		ctx.clearRect(0, 0, width, height);
-
 		setBackground(backgroundGradation, getColor("background", 0));
 		setMinMax();
 		drawAxis(axis);
 	
-		for (i = 0; i < dataLen; i++) {
+		for (i = 0; i < dataLen; i++){
 			w = 1;
 
 			if(len < maxChartElem) x = getXForIndex((i + maxChartElem - len), maxChartElem);
@@ -236,7 +258,6 @@
 			ctx.fillRect(x, y - h, w*(getXInterval(maxChartElem)-8), h);
 		}
 	}
-	
  
 	function isHex(data_){
 		
@@ -248,7 +269,6 @@
 			}
 		}
 		else return false;
-	
 	}
 
 	function HexToRGB(hexData){
@@ -269,20 +289,22 @@
 		};
 	}
 
-	function getColor(a, nth_color){
-		var color_type, color, rgb_color;
+	function getColor(a, nthColor){
+		var colorType, color, rgbColor;
 	
-    if( a == "chart" ) color_type = chartColors;
-		else if( a == "background" ) color_type = backgroundColors;
+    if( a == "chart" ) colorType = chartColors;
+		else if( a == "background" ) colorType = backgroundColors;
 		
-	  color = color_type[nth_color]; 
+	  color = colorType[nthColor]; 
 					 
   	if(isHex(color)){
 			rgb_color = HexToRGB(color);
 			return "rgba("+rgb_color.r+", "+rgb_color.g+", "+rgb_color.b+", "+ rgb_color.a+")";
-		} else {
-			return color;
 		}
+		else{
+			 if(color.split("(")[0].length == 4) return color;
+			 else return ( color.split(")")[0] + ",1)" );
+   	}
 	}
 
 	var JCLib = {
@@ -295,7 +317,9 @@
 			range = obj.range;
 			offset = obj.offset;
 			maxChartElem = obj.maxChartElem;
-			dataLen = data.length;
+	    console.log(data);
+			
+	   	dataLen = data.length;
 	    
 			backgroundColors = obj.backgroundColors;
 			chartColors = obj.chartColors;

@@ -7,11 +7,12 @@
 	// Get data from the json file in the local server
 	function getData(callback) {
     var xmlHttp = new XMLHttpRequest();
-		var address = 'http://chart.kr.pe/jaemin/src/client/data.json';
+		var address = 'http://chart.kr.pe/jaedong/src/client/haha.json';
 
 		xmlHttp.onreadystatechange = function() {
 			if (xmlHttp.readyState == 4 && xmlHttp.status == 200) {
 				data = JSON.parse(xmlHttp.responseText);
+				console.log(data)
 				callback();
 			} 
 		};
@@ -55,7 +56,8 @@
 			currObj.delay = (delay = parseAttr(elem, "delay")) ? delay : 200
 
 			win.JCAnim.setup(currObj);
-		} else if (type == "line" || type == "bar" || type == "pie") {
+		} 
+		else if (type == "line" || type == "bar" || type == "pie") {
 			currObj.range = (range = parseAttrs(elem, "range")) ? range : [-50, 50];
 			currObj.offset = (offset = parseAttr(elem, "offset")) ? offset : 50;
 			currObj.maxChartElem = (max = parseAttr(elem, "max")) ? max : 20;
@@ -75,6 +77,7 @@
 				if (type == "animation") continue;
 				var currObj = obj[target][type];
 
+			//	console.log(data[target])
 				currObj.data = data[target][type];
 				//console.log(type + " " + currObj.backgroundColors);
 				win.JCLib.draw(currObj);
