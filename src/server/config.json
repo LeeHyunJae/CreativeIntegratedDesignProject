@@ -1,0 +1,44 @@
+{
+	"temp": {
+		"line" : {
+			"length" : "20",
+			"interval" : ["1", "s"]
+		},
+		"bar" : {
+			"length" : "20",
+			"interval" : ["1", "s"]
+		},
+		"pie" : {
+			"length" : "100",
+			"interval" : ["10", "s"]
+		}
+	},
+	"heart": {
+		"line" : {
+			"length" : "20",
+			"interval" : ["1", "s"]
+		},
+		"bar" : {
+			"length" : "20",
+			"interval" : ["1", "s"]
+		},
+		"pie" : {
+			"length" : "100",
+			"interval" : ["10", "s"]
+		}
+	},
+	"sleep": {
+		"line" : {
+			"length" : "20",
+			"interval" : ["1", "s"]
+		},
+		"bar" : {
+			"length" : "20",
+			"interval" : ["1", "s"]
+		},
+		"pie" : {
+			"length" : "100",
+			"interval" : ["10", "s"]
+		}
+	}
+}
