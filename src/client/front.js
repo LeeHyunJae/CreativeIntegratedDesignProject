@@ -3,7 +3,7 @@
 
 	function getData() {
     var xmlHttp = new XMLHttpRequest();
-		var address = 'http://chart.kr.pe/jaemin/src/client/data.json';
+		var address = 'http://chart.kr.pe/jaedong/src/client/data.json';
 
 		xmlHttp.onreadystatechange = function() {
 			if (xmlHttp.readyState == 4 && xmlHttp.status == 200) {
@@ -23,6 +23,8 @@
 	
 	function init(elem) {
 		var target, type, obj;
+
+		console.log("elem : "+elem);
 
 		target = parseAttr(elem, "target")[0];
 		type = parseAttr(elem, "type")[0];		

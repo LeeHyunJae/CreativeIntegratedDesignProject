@@ -158,17 +158,17 @@
 		<div class="container">
 			<div class="row">
 				<div class="col-lg-12 text-center">
-					<canvas id="test_1" class="jchart" data-type="line" width="1000" height="600"></canvas>
+					<canvas id="test_1" class="jchart" target="temp" type="line" width="1000" height="600"></canvas>
 				</div>
 			</div>
 			<div class="row">
 				<div class="col-lg-12 text-center">
-					<canvas id="test_2" class="jchart" data-type="bar" width="1000" height="600"></canvas>
+					<canvas id="test_2" class="jchart" target="temp" type="bar" width="1000" height="600"></canvas>
 				</div>
 			</div>
    	  <div class="row">
 				<div class="col-lg-12 text-center">
-					<canvas id="test_3" class="jchart" data-type="pie" width="1000" height="600"></canvas>
+					<canvas id="test_3" class="jchart" target="temp" type="pie" width="1000" height="600"></canvas>
 				</div>
 			</div>
 		</div>
@@ -268,9 +268,11 @@
     });
     </script>
 
-		<script src="../jd_test/CreativeIntegratedDesignProject/chart_library/jcharts.js"></script>
+		<script src="../client/chart.js"></script>
+		<script src="../client/front.js"></script>
+		<script src="../client/anim.js"></script>
 		<script>
-				setInterval(function() {Jcharts.render()}, 1000);
+				setInterval(function() {JCFront.render()}, 1000);
 		</script>
 
 </body>

@@ -1,7 +1,7 @@
 (function (win) {
 	var ctx, type, range, width, height, renderers, offset, maxChartElem;
 	var backgroundColors, chartColors, chartGradation, axis, lineShape;
-	var colorNum, pieRadius;
+	var colorNum, pieRadius, dataLen;
 
 	renderers = {
 		"line" : renderLineChart,
@@ -69,17 +69,17 @@
 	}
 
 	// draw dot line from start_x to end_x
-	function drawDotLine(start_x, end_x, y){
+	function drawDotLine(startX, endX, y){
 		var i, len;
 
-		len = parseInt((end_x - start_x) / 5);
+		len = parseInt((endX - startX) / 5);
 
 		ctx.strokeStyle = "#bbb";
 
 		for(i = 0; i < len + 1; i++){
 			if(i%2 == 0){
-				ctx.moveTo(start_x + i*5, y);
-				ctx.lineTo(start_x + (i+1)*5, y);
+				ctx.moveTo(startX + i*5, y);
+				ctx.lineTo(startX + (i+1)*5, y);
 			}
 		}
 
@@ -99,7 +99,7 @@
 
   // convert out of range values to max or min values
 	function setMinMax() {
-		for (var i = 0; i < data.length; i++) {
+		for (var i = 0; i < dataLen; i++) {
 			if (data[i] < range[0]) data[i] = range[0];
 			else if (data[i] > range[1]) data[i] = range[1];
 		}
@@ -107,7 +107,7 @@
  
 	// set graph color type optionally
 	function setColorType(grad, color){
-		var i, len, gradient;
+		var i, gradient;
 		
 		if(grad){
 			if(type != "pie"){
@@ -139,7 +139,7 @@
 		var i, x, y, a1, a2, sum;
 		
 		var tmp_set = [20, 40, 60]; // 3 part of data
-		var tmp_color = ["#ff8033","#ffb111","#ffc111"]; //pie color
+		//var tmp_color = ["#ff8033","#ffb111","#ffc111"]; //pie color
 		
 		setBackground(backgroundGradation, getColor("background",0));
 
@@ -151,13 +151,15 @@
 		
 		sum = sumSet(tmp_set);
 
-		for (i = 0; i < data.length; i++) {
+		for (i = 0; i < 3; i++) {
 			ctx.beginPath();
-			a2 = a1 + (data[i] / sum) * (2 * Math.PI);
-
+			
+			a2 = a1 + (tmp_set[i] / sum) * (2 * Math.PI);
 			ctx.arc(x, y, pieRadius, a1, a2, false);
 			ctx.lineTo(x, y);
+
 			setColorType(chartGradation, getColor("chart", (i % colorNum)));
+			
 			ctx.fill();
 			ctx.stroke();
 			a1 = a2;
@@ -169,65 +171,58 @@
 	function renderLineChart() {
 		var i, x, y, len, gradient, cx, cy;
 
-		setMinMax();
 		setBackground(backgroundGradation, getColor("background",0));
+		setMinMax();
 		drawAxis(axis);
 
-		len = data.length;
-
-		ctx.lineWidth = 3;
-		ctx.lineJoin = "round";
-	
-//		printAll();
-
+		setLineStyle(3, "round");
 
 		ctx.beginPath();
-		for(i = 0; i < len; i++){
-			if(len < maxChartElem) {
-				x = getXForIndex((i + maxChartElem - len), maxChartElem);
-			} else {
-				x = getXForIndex(i, maxChartElem);
-			}
-
+		for(i = 0; i < dataLen; i++){
+			
+			if(len < maxChartElem) 	x = getXForIndex((i + maxChartElem - len), maxChartElem);
+			else	x = getXForIndex(i, maxChartElem);
+		
 			x += 0.5*getXInterval(maxChartElem);
 			y = getYForValue(data[i]);
+			
 			setColorType(chartGradation, getColor("chart", (i % colorNum)));
 
-			if(lineShape == "smooth"){
-				cx = x - 0.5*getXInterval(maxChartElem);
-				if(i==0) ctx.moveTo(x, y);
-				else{
-					ctx.bezierCurveTo(cx,cy,cx,y,x,y);
-				}
-				cy = y;
-			}
-			else{
-				if(i==0) ctx.moveTo(x,y);
-				else ctx.lineTo(x,y);
+			if(i == 0) ctx.moveTo(x,y);
+			if(i > 0){
+					if(lineShape == "smooth") cy = renderSmoothLine(cx, cy, x, y);
+					else ctx.lineTo(x,y);
 			}
 		}
 		ctx.stroke();
+	}
+
+	function setLineStyle(w,j){
+		ctx.lineWidth = w;
+		ctx.lineJoin = j;	
+	}
+
+	function renderSmoothLine(cx, cy, x, y){
+		cx = x - 0.5*getXInterval(maxChartElem);
+		ctx.bezierCurveTo(cx, cy, cx, y, x, y);
+
+		return y;
 	}
 	
 	// render bar chart function
 	function renderBarChart() {
 		var i, a, x, y, w, h, len;
 
+		setBackground(backgroundGradation, getColor("background", 0));
 		setMinMax();
-		setBackground(background_gradation, getColor("background", 0));
 		drawAxis(axis);
-
-		// ctx.lineWidth = 10;
-		// ctx.lineJoin = "miter";
-
-		len = data.length;
-
-		for (i = 0; i < len; i++) {
+	
+		for (i = 0; i < dataLen; i++) {
 			w = 1;
 
 			if(len < maxChartElem) x = getXForIndex((i + maxChartElem - len), maxChartElem);
 			else x = getXForIndex(i, maxChartElem);
-			//x = len < maxChartElem ? getXForIndex((i + maxChartElem - len), maxChartElem) : getXForIndex(i, maxChartElem);
+			
 			y = getYForValue(data[i]);
 			h = y - getYForValue(0);
 			
@@ -296,8 +291,9 @@
 			range = obj.range;
 			offset = obj.offset;
 			maxChartElem = obj.maxChartElem;
-
-	    backgroundColors = obj.backgroundColors;
+			dataLen = data.length;
+	    
+			backgroundColors = obj.backgroundColors;
 			chartColors = obj.chartColors;
 			backgroundGradation = obj.backgroundGradation;
 			chartGradation  = obj.chartGradation;
