@@ -2,6 +2,8 @@
 	var ctx, type, range, width, height, renderers, offset, maxChartElem;
 	var backgroundColors, chartColors, chartGradation, axis, lineShape;
 	var colorNum, pieRadius, dataLen;
+	var animation, chartAnimationSpeed;
+
 
 	renderers = {
 		"line" : renderLineChart,
@@ -187,7 +189,8 @@
   // render line chart function 
 	function renderLineChart() {
 		var i, x, y, len, gradient, cx, cy, prevX, prevY;
-
+		var tempX, tempY;
+		var animationPoints, lineAnimationSpeed = 100;
 		setBackground(backgroundGradation, getColor("background",0));
 		setMinMax();
 		drawAxis(axis);
@@ -204,18 +207,36 @@
 			x += 0.5*getXInterval(maxChartElem);
 			y = getYForValue(data[i]);
 			
+			if(i == dataLen- 2){
+				tempX = x;
+				tempY = y;
+			}
+			
 			if(i > 0){
 			  ctx.beginPath();
 				ctx.moveTo(prevX, prevY);
 				
 				if(i == 1) cy = y;
-				if(lineShape == "smooth") cy = renderSmoothLine(cx, cy, x, y);
-				else ctx.lineTo(x,y);
-        	
+				
+				if(animation){
+					if(i == dataLen -1){
+						lineAnimationCnt = 1;
+						animationPoints = calcWayPoints(tempX, tempY, x, y);
+						animateLine();
+					} else {
+						ctx.lineTo(x,y);
+					}
+				} else if(lineShape == "smooth"){
+					cy = renderSmoothLine(cx, cy, x, y);
+				}	else {
+					ctx.lineTo(x,y);
+				}
+
 			  ctx.stroke();
 			
 				ctx.beginPath();
-     		if(i == dataLen-1) ctx.arc(x,y,5,0*Math.PI, 2*Math.PI);
+     		
+				if(i == dataLen-1) ctx.arc(x,y,5,0*Math.PI, 2*Math.PI);
 				else ctx.arc(prevX,prevY,5,0*Math.PI, 2*Math.PI);
 		  	ctx.fill();
 			}
@@ -223,6 +244,40 @@
 			prevX = x;
 			prevY = y;
 		}
+		function calcWayPoints(x0, y0, x1, y1) {
+			var waypoints = [];
+			var dx = x1 - x0;
+			var dy = y1 - y0; 
+			for(var i = 0; i <= 10; i++){
+				var x = x0 + dx * i / 10;
+				var y = y0 + dy * i / 10;
+				waypoints.push({
+					x: x,
+					y: y
+				});
+			}
+			return (waypoints);
+		}
+
+		function animateLine() {
+			// draw a line segment from the last waypoint
+			// to the current waypoint
+			
+			ctx.beginPath();
+
+			ctx.moveTo(animationPoints[lineAnimationCnt-1].x, animationPoints[lineAnimationCnt-1].y);
+			ctx.lineTo(animationPoints[lineAnimationCnt].x, animationPoints[lineAnimationCnt].y);
+			ctx.stroke();
+
+			if (lineAnimationCnt < 10) {
+				lineAnimationCnt++;
+				setTimeout(function() {
+					animateLine(animationPoints);
+				}, lineAnimationSpeed);
+			}
+
+		}
+
 	}
 
 	function setLineStyle(w,j){
@@ -236,7 +291,7 @@
 
 		return y;
 	}
-	
+
 	// render bar chart function
 	function renderBarChart() {
 		var i, a, x, y, w, h, len;
@@ -244,27 +299,26 @@
 		setBackground(backgroundGradation, getColor("background", 0));
 		setMinMax();
 		drawAxis(axis);
-	
+
 		for (i = 0; i < dataLen; i++){
 			w = 1;
 
 			if(len < maxChartElem) x = getXForIndex((i + maxChartElem - len), maxChartElem);
 			else x = getXForIndex(i, maxChartElem);
-			
+
 			y = getYForValue(data[i]);
 			h = y - getYForValue(0);
-			
-		  setColorType(chartGradation, getColor("chart", (i % colorNum))); 
+
+			setColorType(chartGradation, getColor("chart", (i % colorNum))); 
 			ctx.fillRect(x, y - h, w*(getXInterval(maxChartElem)-8), h);
 		}
 	}
- 
+
 	function isHex(data_){
-		
+
 		if( typeof data_ == "string" ){
 			if(data_.charAt(0) == '#') return true;
 			else{
-				console.log("Wrong color type");
 				return false;
 			}
 		}
@@ -317,7 +371,6 @@
 			range = obj.range;
 			offset = obj.offset;
 			maxChartElem = obj.maxChartElem;
-	    console.log(data);
 			
 	   	dataLen = data.length;
 	    
@@ -328,7 +381,7 @@
 			axis = obj.axis;
 			lineShape = obj.lineShape;
 			pieRadius = obj.pieRadius;    
-
+			animation = obj.animation;
 			colorNum = chartColors.length;
 
 			renderers[type](data);

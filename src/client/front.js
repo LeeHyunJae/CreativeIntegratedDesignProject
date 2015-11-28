@@ -68,6 +68,7 @@
  			currObj.axis = [-50, -25, 0, 25, 50];
  			currObj.lineShape = "smooth"
  			currObj.pieRadius = 250;
+			currObj.animation = true;
 		}
 	}
 
