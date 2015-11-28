@@ -1,35 +1,47 @@
 (function(win) {
-	var	imgNum, ctx, width, height, target, paths, imgs;
+	var	targets, ctx, width, height, paths, imgs;
 
-	imgNum = 0;
+	targets = [];
+	ctx = {};
+	width = {};
+	height = {};
+	paths = {};
+	imgs = {};
+
+	delay = {
+		temp: 50,
+		heart: 100,
+		sleep: 1000
+	}
+
 	paths = {
 		temp: [
 			"http://www.livescience.com/images/i/000/061/056/original/great-white.jpg?1389213661",
 			"http://snowbrains.com/wp-content/uploads/2015/01/great-white-up-close_6455_600x450.jpg"
+		],
+		heart: [
+			"https://upload.wikimedia.org/wikipedia/commons/thumb/f/f1/Heart_corazón.svg/2000px-Heart_corazón.svg.png",
+			"http://kids.nationalgeographic.com/content/dam/kids/photos/articles/Science/H-P/heart.jpg"
+		],
+		sleep: [
 		]
 	}
 
-	/*
-	win.requestAnimFrame = (function(callback) {
-		return win.requestAnimationFrame || win.webkitRequestAnimationFrame
-			|| win.mozRequestAnimationFrame || win.oRequestAnimationFrame
-			|| win.msRequestAnimationFrame ||
-			function(callback) {
-				win.setTimeout(callback, 1000);
-			};
-	})();
-	*/
+	function isExist(target) {
+		return ctx[target] ? true : false;
+	}
 
-	function loadImages() {
-		imgs = [];
+	function isReady(target) {
+		return imgs[target].length == paths[target].length ? true : false;
+	}
+
+	function loadImages(target) {
+		imgs[target] = [];
 
 		paths[target].forEach(function(path) {
 			var img = new Image;
 			img.onload = function() {
-				imgs.push(img);
-				if (imgs.length == paths[target].length) {
-					animate();
-				}
+				imgs[target].push(img);
 			}
 			img.src = path;
 		});
@@ -45,25 +57,45 @@
     context.stroke();
   }
 
-	function animate() {
-		ctx.clearRect(0, 0, width, height);
-		ctx.drawImage(imgs[imgNum], 0, 0, width, height);
-		console.log(imgs[imgNum]);
-		imgNum = (imgNum + 1) % 2;
+	function animate(times, nums) {
+		var offset = 100;
+	
+		for (target in times) {
+			if (isReady(target) && times[target] > delay[target]) {
+				ctx[target].clearRect(0, 0, width[target], height[target]);
+				ctx[target].drawImage(imgs[target][nums[target]], 0, 0, width[target], height[target]);
+				times[target] -= delay[target];
+				nums[target] = (nums[target] + 1) % imgs[target].length;
+			}
+			times[target] += offset;
+		}
 
 		win.setTimeout(function() {
-			animate();
-		}, 500);
+			animate(times, nums);
+		}, offset);
 	}
 
 	var JCAnim = {
-		draw: function(obj) {
-			ctx = obj.ctx;
-			width = obj.width;
-			height = obj.height;
-			target = obj.target;
+		setup: function(obj) {
+			var target = obj.target;
 
-			loadImages();
+			targets.push(target);
+			ctx[target] = obj.ctx;
+			width[target] = obj.width;
+			height[target] = obj.height;
+
+			loadImages(target);
+		},
+		draw: function() {
+			var times = {};
+			var nums = {};
+
+			for (i in targets) {
+				times[targets[i]] = 0;
+				nums[targets[i]] = 0;
+			}
+
+			animate(times, nums);	
 		}
 	}
 

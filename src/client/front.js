@@ -1,9 +1,15 @@
 (function (win) {
 	var data;
 
+	data = {
+		line: [0],
+		bar: [0],
+		pie: [0]
+	}
+
 	function getData() {
     var xmlHttp = new XMLHttpRequest();
-		var address = 'http://chart.kr.pe/jaedong/src/client/data.json';
+		var address = 'http://chart.kr.pe/jaemin/src/client/data.json';
 
 		xmlHttp.onreadystatechange = function() {
 			if (xmlHttp.readyState == 4 && xmlHttp.status == 200) {
@@ -24,8 +30,6 @@
 	function init(elem) {
 		var target, type, obj;
 
-		console.log("elem : "+elem);
-
 		target = parseAttr(elem, "target")[0];
 		type = parseAttr(elem, "type")[0];		
 		obj = {};
@@ -41,27 +45,16 @@
 		if (type == "animation") {
 			obj.theme = 1;
 
-			win.JCAnim.draw(obj);
+			win.JCAnim.setup(obj);
 		} else if (type == "line" || type == "bar" || type == "pie") {
 			obj.range = [-50, 50];
 			obj.offset = 50;
 			obj.maxChartElem = 20;
 			obj.data = data[type];
 
-			obj.backgroundColors = [[200, 200, 200], [200, 20, 200]];
-			obj.chartColors = ["#002b33", "#0080cc"];
-			obj.backgroundGradation = false;
-			obj.chartGradation = false;
-			obj.axis = [-50, -25, 0, 25, 50];
-			obj.lineShape = "smooth"
-			obj.pieRadius = 250;
-
 			win.JCLib.draw(obj);
 		}
 	}
-
-	// Get the initial data
-	getData();
 
 	// Jcharts API
 	JCFront = {
@@ -75,6 +68,8 @@
 	      for (var i = 0; i < elems.length; i++) {
 	        init(elems[i]);
 	      }
+
+				win.JCAnim.draw();
 	    }
 	};
 
