@@ -37,8 +37,10 @@
 	}
 
 	// return ith x coordinate
-	function getXForIndex(idx, elem_number) {
-		return offset + idx * getXInterval(elem_number);
+	function getXForIndex(idx){
+
+		if(dataLen < maxChartElem) return offset + (idx + maxChartElem - dataLen) * getXInterval(maxChartElem);
+		else return offset + idx * getXInterval(maxChartElem);
 	}
 
 	// return y coordinate for input value
@@ -76,8 +78,9 @@
 
 		len = parseInt((endX - startX) / 5);
 
-		ctx.strokeStyle = "#bbb";
+		ctx.strokeStyle = "grey";
 
+		ctx.beginPath();
 		for(i = 0; i < len + 1; i++){
 			if(i%2 == 0){
 				ctx.moveTo(startX + i*5, y);
@@ -154,7 +157,6 @@
 	// Render pie chart function
 	function renderPieChart() {
 		var i, centerX, centerY, a1, a2, sum;
-	
 		var tmp_set = [20, 40, 60]; // 3 part of data
 		
 		setBackground(backgroundGradation, getColor("background",0));
@@ -186,7 +188,7 @@
   // render line chart function 
 	function renderLineChart() {
 		var i, x, y, gradient, cx, cy, prevX, prevY;
-		var animationPoints, lineAnimationSpeed = 100;
+		var animationPoints;
 		
 		setBackground(backgroundGradation, getColor("background",0));
 		setMinMax();
@@ -198,9 +200,7 @@
 		
 			setColorType(chartGradation, getColor("chart", i%colorNum));
 			
-			if(dataLen < maxChartElem) 	x = getXForIndex((i + maxChartElem - dataLen), maxChartElem);
-			else	x = getXForIndex(i, maxChartElem);
-			
+			x = getXForIndex(i);
 			x += 0.5*getXInterval(maxChartElem);
 			y = getYForValue(data[i]);
 		
@@ -210,9 +210,8 @@
 				ctx.beginPath();
 				ctx.moveTo(prevX, prevY);
 				if(i == dataLen -1 && animation){
-					lineAnimationCnt = 1;
 					animationPoints = calcWayPoints(prevX, prevY, x, y);
-					animateLine(ctx);
+					animateLine(ctx, animationPoints, 1 );
 				}
 				else{
 					if(lineShape == "smooth") cy = renderSmoothLine(cx, cy, x, y);
@@ -226,8 +225,9 @@
 			prevX = x;
 			prevY = y;
 		}
+	}
 
-		function animateLine(ctx) {
+	function animateLine(ctx, animationPoints, lineAnimationCnt) {
 			
 			ctx.beginPath();
 			ctx.moveTo(animationPoints[lineAnimationCnt-1].x, animationPoints[lineAnimationCnt-1].y);
@@ -237,11 +237,10 @@
 			if (lineAnimationCnt < 10) {
 				lineAnimationCnt++;
 				setTimeout(function() {
-					animateLine(ctx);
-				}, lineAnimationSpeed);
+					animateLine(ctx, animationPoints, lineAnimationCnt);
+				}, 100);
 			}
-  	}
-	}
+  }
 
 	function drawCirclePoint(x, y){
 			ctx.beginPath();
@@ -289,10 +288,7 @@
 
 		for (i = 0; i < dataLen; i++){
 			w = 1;
-
-			if(dataLen < maxChartElem) x = getXForIndex((i + maxChartElem - dataLen), maxChartElem);
-			else x = getXForIndex(i, maxChartElem);
-
+			x = getXForIndex(i);
 			y = getYForValue(data[i]);
 			h = y - getYForValue(0);
 			
