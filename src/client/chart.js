@@ -295,24 +295,28 @@
 			x = getXForIndex(i-idxOffset);
 			y = getYForValue(data[i]);
 			h = y - getYForValue(0);
-			
+			anger = getXInterval(maxChartElem) - 8
+
 			setColorType(chartGradation, getColor("chart", (i % colorNum))); 
 		
-			if(i == dataLen-1 && animation) animateBar(x, y, h, ctx, barAnimationCnt);	
-		  else ctx.fillRect(x, y - h, w*(getXInterval(maxChartElem)-8), h);
-	  }
+			if(i == dataLen-1 && animation) {
+				animateBar(x, y, h, ctx, barAnimationCnt, anger);	
+			} else {
+				ctx.fillRect(x, y - h, w * anger, h);
+			}
+		}
 	}
 
-	function animateBar(x, y, h, ctx, cnt){
+	function animateBar(x, y, h, ctx, cnt, anger){
     var w = 1;
 		var renderedH = h * cnt / 10;
 
-		ctx.fillRect(x, y - h, w*(getXInterval(maxChartElem) - 8), renderedH);
+		ctx.fillRect(x, y - h, w * anger, renderedH);
 
 		if(cnt < 10){
 			cnt++;
 			setTimeout(function() { 
-				animateBar(x, y, h, ctx, cnt);
+				animateBar(x, y, h, ctx, cnt, anger);
 			}, 50);
 		}
 	}

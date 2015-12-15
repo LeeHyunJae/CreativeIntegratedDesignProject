@@ -3,7 +3,21 @@
 
 	data = {};
 	obj = {};
-	dataAddr = 'http://chart.kr.pe/jaedong/src/client/data.json';
+	dataAddr = 'http://chart.kr.pe/data.json';
+	pieInfo = {
+		heart: {
+			labels: ["low", "mid", "high"],
+			cuts: [25, 50]
+		},
+		temp: {
+			labels: ["low", "mid", "high"],
+			cuts: [25, 50]
+		},
+		sleep: {
+			labels: ["low", "mid", "high"],
+			cuts: [25, 50]
+		}
+	}
 
 	// Get data from the json file in the local server
 	function getData(callback) {
@@ -36,7 +50,6 @@
 		var target, type, currObj;
 
 		elem.width = elem.width;
-
 		target = parseAttr(elem, "target");
 		type = parseAttr(elem, "type");		
 
@@ -55,30 +68,66 @@
 			currObj.delay = (delay = parseAttr(elem, "delay")) ? delay : 200
 
 			win.JCAnim.setup(currObj);
-		} 
-		else if (type == "line" || type == "bar" || type == "pie") {
-			currObj.range = (range = parseAttrs(elem, "range")) ? range : [-50, 50];
-			currObj.offset = (offset = parseAttr(elem, "offset")) ? offset : 50;
-			currObj.maxChartElem = (max = parseAttr(elem, "max")) ? max : 20;
- 			currObj.backgroundColors = ["rgb(200, 200, 200)"];
- 			currObj.chartColors = ["#002b33", "#0080cc", "#0054cc"];
- 			currObj.backgroundGradation = false;
- 			currObj.chartGradation = true;
- 			currObj.axis = [-50, -25, 0, 25, 50];
- 			currObj.lineShape = "step"
- 			currObj.pieRadius = 250;
-			currObj.animation = true;
+		} else {
+        currObj.backgroundColors = ["rgb(200, 200, 200)"];
+        currObj.chartColors = ["#002b33", "#0080cc", "#0054cc"];
+        currObj.backgroundGradation = false;
+        currObj.chartGradation = true;
+	      currObj.animation = true;
+
+			if (type == "line" || type == "bar") {
+				currObj.range = (range = parseAttrs(elem, "range")) ? range : [-50, 50];
+				currObj.offset = (offset = parseAttr(elem, "offset")) ? offset : 50;
+				currObj.maxChartElem = (max = parseAttr(elem, "max")) ? max : 20;
+ 				currObj.axis = [-50, -25, 0, 25, 50];
+ 				currObj.lineShape = "step"
+			} else if (type == "pie") {
+				currObj.pieRadius = 250;
+				currObj.labels = pieInfo[target].labels;
+			}
 		}
+	}
+
+	function parseSetForPie(target) {
+		var set = data[target];
+		var cuts = (pieInfo[target].cuts).sort();
+		var cnts = [];
+		var size = cuts.length + 1;
+		while(size--) cnts[size] = 0;
+
+		for (i = 0; i < set.length; i++) {
+			var value = set[i];
+			var found = false;
+
+			for (j = 0; j < cuts.length; j++) {
+				if (value < cuts[j]) {
+					cnts[j]++;
+					found = true;
+					break;
+				}
+			}
+
+			if (!found) {
+				cnts[cnts.length - 1]++;
+			}
+		}
+
+		return cnts;
 	}
 
 	function drawCharts() {
 		for (target in obj) {
 			for (type in obj[target]) {
-				if (type == "animation") continue;
-				var currObj = obj[target][type];
+				if (type != "animation") {
+					var currObj = obj[target][type];
 
-				currObj.data = data[target];
-				win.JCLib.draw(currObj);
+					if (type == "line" || type == "bar") {
+						currObj.data = data[target];
+					} else {
+						currObj.data = parseSetForPie(target)
+					}
+					win.JCLib.draw(currObj);
+				}
 			}
 		}
 

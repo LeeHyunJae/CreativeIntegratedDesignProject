@@ -5,7 +5,7 @@ var moment = require('moment');
 var mysql = require('./mysql');
 
 // Addresses
-var dataAddr = '../client/data.json';
+var dataAddr = '/var/www/html/data.json';
 var dataAddr2 = '/var/www/html/jaedong/src/client/data.json';
 
 // Global variables
@@ -49,13 +49,11 @@ function insertData(newData) {
 	var value = newData.value;
 
 	insertRealTime(target, currTime, value);
-	insertRealTime(target, currTime, value);
-	insertRealTime(target, currTime, value);
 }
 
 // Write data to a file
 function writeData(data) {
-  fs.writeFile(dataAddr2, JSON.stringify(data), function(err) {
+  fs.writeFile(dataAddr, JSON.stringify(data), function(err) {
 		if (err) throw err;
   });
 }
@@ -114,9 +112,9 @@ client.on('message', function (topic, message) {
 
 	insertData(newData);
 	writeData(data);
-	console.log(JSON.stringify(data))
+	// console.log(JSON.stringify(data))
 
-	// console.log("Received: " + message)
+	console.log("Received: " + message)
 
 	var str = 'insert into data set ?';
 	var query = connection.query(str, newData, function(err, result) {

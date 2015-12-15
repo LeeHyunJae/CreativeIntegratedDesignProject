@@ -1,14 +1,14 @@
 {
 	"temp": {
-		"length" : "100",
+		"length" : "20",
 		"interval" : ["1", "s"]
 	},
 	"heart": {
-		"length" : "100",
+		"length" : "20",
 		"interval" : ["1", "s"]
 	},
 	"sleep": {
-		"length" : "100",
+		"length" : "20",
 		"interval" : ["1", "s"]
 	}
 }

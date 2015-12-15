@@ -12,9 +12,9 @@ var data = {
 	"sleep": []
 }
 var length = {
-	"temp": [1, "h"],
-	"heart": [1, "h"],
-	"sleep": [24, "h"]
+	"temp": [10, "s"],
+	"heart": [10, "s"],
+	"sleep": [10, "s"]
 }
 
 // Check if a user is dangerous or not

@@ -9,11 +9,14 @@
 		</style>
 	</head>
 	<body>
-		<canvas id="test" class="jchart" data-type="line" width="500" height="500"></canvas>
+		<canvas id="test" class="jchart" target="temp" type="line" width="500" height="500"></canvas>
+		<canvas id="test" class="jchart" target="temp" type="bar" width="500" height="500"></canvas>
+		<canvas id="test" class="jchart" target="temp" type="pie" width="500" height="500"></canvas>
 	</body>
 	<script src="../src/client/chart.js"></script>
 	<script src="../src/client/front.js"></script>
+	<script src="../src/client/anim.js"></script>
 	<script>
-		setInterval(function() {JCFront.render()}, 1000);
+		JCFront.render();
 	</script>
 </html>
