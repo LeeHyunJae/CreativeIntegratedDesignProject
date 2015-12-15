@@ -1,13 +1,13 @@
 (function (win) {
-	var data, obj;
+	var data, dataAddr, obj;
 
 	data = {};
 	obj = {};
+	dataAddr = 'http://chart.kr.pe/jaedong/src/client/data.json';
 
 	// Get data from the json file in the local server
 	function getData(callback) {
     var xmlHttp = new XMLHttpRequest();
-		var address = 'http://chart.kr.pe/jaedong/src/client/data.json';
 
 		xmlHttp.onreadystatechange = function() {
 			if (xmlHttp.readyState == 4 && xmlHttp.status == 200) {
@@ -15,7 +15,7 @@
 				callback();
 			} 
 		};
-		xmlHttp.open("GET", address, true);
+		xmlHttp.open("GET", dataAddr, true);
 		xmlHttp.send();
 	}
 
@@ -77,7 +77,7 @@
 				if (type == "animation") continue;
 				var currObj = obj[target][type];
 
-				currObj.data = data[target][type];
+				currObj.data = data[target];
 				win.JCLib.draw(currObj);
 			}
 		}
@@ -86,7 +86,7 @@
 			getData(function() {
 				drawCharts();
 			})
-		}, 3000);
+		}, 1000);
 	}
 
 	// Jcharts API

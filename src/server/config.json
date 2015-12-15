@@ -1,44 +1,14 @@
 {
 	"temp": {
-		"line" : {
-			"length" : "20",
-			"interval" : ["1", "s"]
-		},
-		"bar" : {
-			"length" : "20",
-			"interval" : ["1", "s"]
-		},
-		"pie" : {
-			"length" : "100",
-			"interval" : ["10", "s"]
-		}
+		"length" : "100",
+		"interval" : ["1", "s"]
 	},
 	"heart": {
-		"line" : {
-			"length" : "20",
-			"interval" : ["1", "s"]
-		},
-		"bar" : {
-			"length" : "20",
-			"interval" : ["1", "s"]
-		},
-		"pie" : {
-			"length" : "100",
-			"interval" : ["10", "s"]
-		}
+		"length" : "100",
+		"interval" : ["1", "s"]
 	},
 	"sleep": {
-		"line" : {
-			"length" : "20",
-			"interval" : ["1", "s"]
-		},
-		"bar" : {
-			"length" : "20",
-			"interval" : ["1", "s"]
-		},
-		"pie" : {
-			"length" : "100",
-			"interval" : ["10", "s"]
-		}
+		"length" : "100",
+		"interval" : ["1", "s"]
 	}
 }

@@ -11,11 +11,7 @@ var dataAddr2 = '/var/www/html/jaedong/src/client/data.json';
 // Global variables
 var config = {};
 var data = {};
-var time = {
-	temp: {},
-	heart: {},
-	sleep: {}
-};
+var time = {};
 
 // Push a element into a set
 function push(set, elem, len) {
@@ -25,23 +21,23 @@ function push(set, elem, len) {
 	}
 }
 
-// Insert a element with type
+// Insert a element
 // Data which arrived before (prevTime + interval) are discarded
-function insertRealTime(target, type, currTime, value) {
-	var interval = config[target][type].interval;
-	var length = config[target][type].length;
+function insertRealTime(target, currTime, value) {
+	var interval = config[target].interval;
+	var length = config[target].length;
 
-	if (!time[target][type]) {
-		time[target][type] = currTime;
-		push(data[target][type], value, length);
+	if (!time[target]) {
+		time[target] = currTime;
+		push(data[target], value, length);
 	}	
 	else {
-		var prevTime = time[target][type];
+		var prevTime = time[target];
 		var plusTime = moment(prevTime).add(interval[0], interval[1]);
 
 		if (plusTime.isBefore(currTime)) {
-			time[target][type] = plusTime;
-			push(data[target][type], value, length);
+			time[target] = plusTime;
+			push(data[target], value, length);
 		}
 	}
 }
@@ -52,9 +48,9 @@ function insertData(newData) {
 	var currTime = moment(newData.time);
 	var value = newData.value;
 
-	insertRealTime(target, "line", currTime, value);
-	insertRealTime(target, "bar", currTime, value);
-	insertRealTime(target, "pie", currTime, value);
+	insertRealTime(target, currTime, value);
+	insertRealTime(target, currTime, value);
+	insertRealTime(target, currTime, value);
 }
 
 // Write data to a file
@@ -85,10 +81,7 @@ var connection = mysql.connection;
 	config = JSON.parse(result);
 
 	for (target in config) {
-		data[target] = {};
-		for (type in config[target]) {
-			data[target][type] = [];
-		}
+		data[target] = [];
 	}
 
 	console.log("Read config")
