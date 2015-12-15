@@ -1,9 +1,17 @@
 (function (win) {
 	var ctx, type, range, width, height, renderers, offset, maxChartElem;
 	var backgroundColors, chartColors, chartGradation, axis, lineShape;
-	var colorNum, pieRadius, dataLen;
+	var colorNum, pieRadius, dataLen, idxOffseti, centerX, centerY;
 	var animation, chartAnimationSpeed;
 
+	defaultVars = {
+		axisFont : "20px Consolas",
+		axisStyleColor : "white",
+		yAxisOffset : 10,
+		xAxisOffset : 20,	
+		dotLineStyle : "grey",
+
+	};
 
 	renderers = {
 		"line" : renderLineChart,
@@ -40,7 +48,7 @@
 	function getXForIndex(idx){
 
 		if(dataLen < maxChartElem) return offset + (idx + maxChartElem - dataLen) * getXInterval(maxChartElem);
-		else return offset + idx * getXInterval(maxChartElem);
+		return offset + idx * getXInterval(maxChartElem);
 	}
 
 	// return y coordinate for input value
@@ -59,17 +67,17 @@
 			if (val < range[0] || val > range[1]) {
 				continue;
 			}
-			h = getYForValue(val, range);
+			h = getYForValue(val);
 
-			ctx.font = "20px Consolas";
-			ctx.fillStyle="white";
-			ctx.fillText(val, 10, h + 5);
+			ctx.font = defaultVars.axisFont;
+			ctx.fillStyle = defaultVars.axisStyleColor;
+			ctx.fillText(val, defaultVars.yAxisOffset, h + 5);
 			drawDotLine(offset, width - offset, h);
 		}
 		
-		ctx.fillText("-20s", 50, height-20); 
-		ctx.fillText("-10s", 0.5*width-55, height-20);
-		ctx.fillText("now", width-95, height-20);
+		ctx.fillText("-20s", 50, height - defaultVars.xAxisOffset); 
+		ctx.fillText("-10s", 0.5*width - 55, height - defaultVars.xAxisOffset);
+		ctx.fillText("now", width - 95, height - defaultVars.xAxisOffset);
 	}
 
 	// draw dot line from start_x to end_x
@@ -78,7 +86,7 @@
 
 		len = parseInt((endX - startX) / 5);
 
-		ctx.strokeStyle = "grey";
+		ctx.strokeStyle = defaultVars.dotLineStyle;
 
 		ctx.beginPath();
 		for(i = 0; i < len + 1; i++){
@@ -111,16 +119,16 @@
 	}
 
   function setGradColor(color){
-		var splitParen, splitComma, gradColor, r, g, b, a;
+		var splitByParen, splitByComma, gradColor, r, g, b, a;
 		
-		splitParen = color.split("(");
-		splitParen = splitParen[1].split(")");
-		splitComma = splitParen[0].split(",");
+		splitByParen = color.split("(");
+		splitByParen = splitByParen[1].split(")");
+		splitByComma = splitByParen[0].split(",");
 
-		r = parseInt(splitComma[0])/8;
-		g = parseInt(splitComma[1])/8;
-		b = parseInt(splitComma[2])/8;
-		a = parseInt(splitComma[3]);
+		r = parseInt(splitByComma[0])/8;
+		g = parseInt(splitByComma[1])/8;
+		b = parseInt(splitByComma[2])/8;
+		a = parseInt(splitByComma[3]);
 
 	  gradColor = "rgba(" + Math.trunc(r) + "," + Math.trunc(g) + "," + Math.trunc(b) + "," + a + ")";
   
@@ -130,11 +138,11 @@
 	// set graph color type optionally
 	function setColorType(grad, color){
 		var i, gradient;
-	
+
 		if(grad){			
 			if(isHex(color)) color = HexToRGB(color);
 			
-			if(type == "pie") gradient = ctx.createRadialGradient(width/2, height/2, 0, width/2, height/2, pieRadius);
+			if(type == "pie") gradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, pieRadius);
 			else gradient = ctx.createLinearGradient(0,0,0,height);
 			
 			gradient.addColorStop(0, color);
@@ -156,23 +164,19 @@
 
 	// Render pie chart function
 	function renderPieChart() {
-		var i, centerX, centerY, a1, a2, sum;
-		var tmp_set = [20, 40, 60]; // 3 part of data
+		var i, a1, a2, sum;
 		
 		setBackground(backgroundGradation, getColor("background",0));
-
-		centerX = width / 2;
-		centerY = height / 2;
 		
 		a1 = 1.5 * Math.PI;
 		a2 = 0;
 		
-		sum = sumSet(tmp_set);
+		sum = sumSet(data);
 
-		for (i = 0; i < tmp_set.length; i++) {
+		for (i = 0; i < dataLen; i++) {
 			ctx.beginPath();
 			
-			a2 = a1 + (tmp_set[i] / sum) * (2 * Math.PI);
+			a2 = a1 + (data[i] / sum) * (2 * Math.PI);
 			ctx.arc(centerX, centerY, pieRadius, a1, a2, false);
 			ctx.lineTo(centerX, centerY);
 
@@ -189,18 +193,18 @@
 	function renderLineChart() {
 		var i, x, y, gradient, cx, cy, prevX, prevY;
 		var animationPoints;
-		
+
 		setBackground(backgroundGradation, getColor("background",0));
 		setMinMax();
 		drawAxis(axis);
 		
 		setLineStyle(3, "round");
 
-		for(i = 0; i < dataLen; i++){
+		for(i = idxOffset; i < dataLen; i++){
 		
 			setColorType(chartGradation, getColor("chart", i%colorNum));
 			
-			x = getXForIndex(i);
+			x = getXForIndex(i-idxOffset);
 			x += 0.5*getXInterval(maxChartElem);
 			y = getYForValue(data[i]);
 		
@@ -286,9 +290,9 @@
 		setMinMax();
 		drawAxis(axis);
 
-		for (i = 0; i < dataLen; i++){
+		for (i = idxOffset; i < dataLen; i++){
 			w = 1;
-			x = getXForIndex(i);
+			x = getXForIndex(i-idxOffset);
 			y = getYForValue(data[i]);
 			h = y - getYForValue(0);
 			
@@ -375,6 +379,12 @@
 			pieRadius = obj.pieRadius;    
 			animation = obj.animation;
 			colorNum = chartColors.length;
+
+			if(dataLen > maxChartElem) idxOffset = dataLen - maxChartElem;
+			else idxOffset = 0;
+
+			centerX = width/2;
+			centerY = height/2;
 
 			renderers[type](data);
 		}
