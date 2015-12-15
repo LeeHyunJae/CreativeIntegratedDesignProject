@@ -112,9 +112,8 @@ client.on('message', function (topic, message) {
 
 	insertData(newData);
 	writeData(data);
-	// console.log(JSON.stringify(data))
 
-	console.log("Received: " + message)
+	// console.log("Received: " + message)
 
 	var str = 'insert into data set ?';
 	var query = connection.query(str, newData, function(err, result) {

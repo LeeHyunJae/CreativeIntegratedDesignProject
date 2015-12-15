@@ -74,15 +74,15 @@
         currObj.backgroundGradation = false;
         currObj.chartGradation = true;
 	      currObj.animation = true;
+				currObj.offset = (offset = parseAttr(elem, "offset")) ? offset : 50;
 
 			if (type == "line" || type == "bar") {
 				currObj.range = (range = parseAttrs(elem, "range")) ? range : [-50, 50];
-				currObj.offset = (offset = parseAttr(elem, "offset")) ? offset : 50;
 				currObj.maxChartElem = (max = parseAttr(elem, "max")) ? max : 20;
  				currObj.axis = [-50, -25, 0, 25, 50];
  				currObj.lineShape = "step"
 			} else if (type == "pie") {
-				currObj.pieRadius = 250;
+//				currObj.pieRadius = 250;
 				currObj.labels = pieInfo[target].labels;
 			}
 		}
