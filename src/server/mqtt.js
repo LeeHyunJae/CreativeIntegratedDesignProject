@@ -4,6 +4,10 @@ var mqtt = require('mqtt');
 var moment = require('moment');
 var mysql = require('./mysql');
 
+// Addresses
+var dataAddr = '../client/data.json';
+var dataAddr2 = '/var/www/html/jaedong/src/client/data.json';
+
 // Global variables
 var config = {};
 var data = {};
@@ -33,7 +37,7 @@ function insertRealTime(target, type, currTime, value) {
 	}	
 	else {
 		var prevTime = time[target][type];
-		var plusTime = prevTime.add(interval[0], interval[1]);
+		var plusTime = moment(prevTime).add(interval[0], interval[1]);
 
 		if (plusTime.isBefore(currTime)) {
 			time[target][type] = plusTime;
@@ -55,9 +59,18 @@ function insertData(newData) {
 
 // Write data to a file
 function writeData(data) {
-  fs.writeFile('../client/data.json', JSON.stringify(data), function(err) {
+  fs.writeFile(dataAddr2, JSON.stringify(data), function(err) {
 		if (err) throw err;
   });
+}
+
+// Print config for debugging
+function printConfig() {
+	for (i in config) {
+		for (j in config[i]) {
+			console.log("- config[" + i + "][" + j + "]: " + JSON.stringify(config[i][j]))
+		}
+	}
 }
 
 // Connect to MQTT
@@ -77,6 +90,9 @@ var connection = mysql.connection;
 			data[target][type] = [];
 		}
 	}
+
+	console.log("Read config")
+	printConfig()
 })();
 
 // Get data from MYSQL
@@ -98,12 +114,16 @@ client.on('connect', function () {
 });
 
 // Listen to the MQTT client
+// Data should be { target: T, value: V }
 client.on('message', function (topic, message) {
 	var newData = JSON.parse(message);
 	newData.time = moment().format("YYYY-MM-DD HH:mm:ss");
 
 	insertData(newData);
 	writeData(data);
+	console.log(JSON.stringify(data))
+
+	// console.log("Received: " + message)
 
 	var str = 'insert into data set ?';
 	var query = connection.query(str, newData, function(err, result) {
