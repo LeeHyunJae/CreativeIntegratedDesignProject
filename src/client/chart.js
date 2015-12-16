@@ -222,55 +222,69 @@
 		var dataLen = data.length;
 		var centerX = chart.width / 2;
 		var centerY = chart.height / 2;
+		var angleArray = [];
 
 		if (!opShape.radius) {
 			calculateRadius();
 		}
 		setBackground(backgroundGradation, getColor("background",0));
-
-		for (i = 0; i < dataLen; i++) {
-			ctx.beginPath();
-			
+	
+		for (var i = 0; i < dataLen; i++) {
 			a2 = a1 + (data[i] / sum) * (2 * Math.PI);
+
 			if(animation.on){
-				animatePie(ctx, a1, a2, i, 0);
-			}else{
+				angleArray[i] = { sAngle : a1 , eAngle : a2 };
+				if(i == dataLen - 1) animatePie(ctx, angleArray, 0, 0);
+			}
+			else{
+				ctx.beginPath();
 				ctx.arc(centerX, centerY, opShape.radius, a1, a2, false);
 				ctx.lineTo(centerX, centerY);
-			
+		
 				setColorType(gradation.chart, getColor("chart", (i % opColor.number)));
-			
 				ctx.fill();
 				ctx.stroke();
-				a1 = a2;
 			}
+			a1 = a2;
 		}
-		ctx.stroke();
 	}
-
-	function animatePie(ctx, a1, a2, idx, cnt){
+	
+	function animatePie(ctx, angleArray, cnt1, cnt2){
 		var step = animation.step;
 		var centerX = chart.width / 2;
 		var centerY = chart.height / 2;
-		var renderedAngle = a1 + (a2 - a1) * cnt / step;
+		var sAngle, eAngle;
+		
+		for(var i = 0; i < cnt1+1; i++){
+			sAngle = angleArray[i].sAngle;	
+			eAngle = angleArray[i].eAngle;
+			if(i == cnt1) eAngle = sAngle + (eAngle - sAngle) * cnt2 / step;
+				
+			ctx.beginPath();
+			ctx.arc(centerX, centerY, opShape.radius, sAngle, eAngle, false);
+			ctx.lineTo(centerX, centerY);
+		
+			setColorType(gradation.chart, getColor("chart", (i % opColor.number)));
+			ctx.fill();
+			ctx.stroke();
+		}
 
-
-		ctx.arc(centerX, centerY, opShape.radius, a1, renderedAngle);
-		ctx.lineTo(centerX, centerY);
-
-		setColorType(gradation.chart, getColor("chart", (idx % opColor.number)));
-
-	  ctx.fill();
-	  ctx.stroke();
-	
-		if (cnt < step) {
-			cnt++;
+		if (cnt2 < step) {
+			cnt2++;
 			setTimeout(function() { 
-				animatePie(ctx, a1, a2, idx, cnt);
+				animatePie(ctx, angleArray, cnt1, cnt2);
 			}, 500/step);
-		}	
-	}
-	
+		}
+		else{
+			if(cnt1 < (angleArray.length - 1)){
+				cnt1++;
+				cnt2 = 0;
+				setTimeout(function() {
+					animatePie(ctx, angleArray, cnt1, cnt2);
+				}, 500/step);
+			}
+		}
+	}	
 
   // render line chart function 
 	function renderLineChart() {
@@ -321,7 +335,6 @@
 			ctx.lineTo(animationPoints[cnt].x, animationPoints[cnt].y);
 			ctx.stroke();
 		}
-
 		if (cnt < step) {
 			cnt++;
 			setTimeout(function() {
@@ -473,7 +486,8 @@
 			opShape.line = obj.lineShape;
 			opShape.radius = (obj.pieRadius == 0) ? obj.pieRadius : calculateRadius();
 
-			opColor.chart = obj.chartColors;
+			//opColor.chart = obj.chartColors;
+			opColor.chart = colorType[1];
 			opColor.number = obj.chartColors.length;
 			opColor.background = obj.backgroundColors;
 

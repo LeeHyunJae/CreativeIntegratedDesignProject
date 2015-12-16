@@ -183,7 +183,7 @@
 			getData(function() {
 				drawCharts();
 			})
-		}, 1000);
+		}, 5000);
 	}
 
 	// Jcharts API
