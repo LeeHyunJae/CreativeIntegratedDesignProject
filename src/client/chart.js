@@ -208,7 +208,7 @@
 		}
 		setBackground(opBackground.gradation, getColor("background",0));
 	
-		if (opLabelTable.on) drawPieLabelTable(ctx);
+		//if (opLabelTable.on) drawPieLabelTable(ctx);
 
 		for (var i = 0; i < dataLen; i++) {
 			a2 = a1 + (data[i] / sum) * (2 * Math.PI);
@@ -273,7 +273,7 @@
 			eAngle = angleArray[i].eAngle;
 			
 			if(i == cnt1) eAngle = sAngle + (eAngle - sAngle) * cnt2 / step;
-			if( cnt2 > 9) drawPieLabel(ctx, angleArray, i);
+			//if( cnt2 > 9) drawPieLabel(ctx, angleArray, i);
 			
 			ctx.beginPath();
 			ctx.arc(centerX, centerY, opPie.radius, sAngle, eAngle, false);
@@ -535,9 +535,6 @@
 			opAnimation.step = getOpt(obj.animationStep, 20);
 			opAnimation.type = getOpt(obj.animationType, 0);
 
-			opPie.labels = obj.labels;
-			
-			opAxis.yValues = obj.axis;
 			while (data.length > opChart.elemNum) {
 				data.shift();
 			}
