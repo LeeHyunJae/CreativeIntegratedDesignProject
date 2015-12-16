@@ -40,7 +40,7 @@
 	// Parse multiple attributes from an element
 	function parseOpts(elem, attr) {
 		var val = elem.getAttribute(attr);
-		var options = val ? val.replace(/, +/g, " ").split(/ +/g) : null;
+		var options = val ? val.replace(/ +/g, " ").split(/ +/g) : null;
 		var result = {};
 
 		if (!options) return null;
@@ -121,10 +121,12 @@
 		newObj.height = elem.height;
 		newObj.ctx = elem.getContext("2d");
 
+		newObj.chartColorIdx = 0;
+
 		for (opt in options) {
 			newObj[opt] = options[opt];
 		}
-		
+
 		/*
 		if (type == "animation") {
 			currObj.theme = (theme = parseAttr(elem, "theme")) ? theme : 0
@@ -197,17 +199,23 @@
 
 			if (type != "animation") {
 				if (type == "line" || type == "bar") {
+					if (obj.chartColors) {
+						obj.chartColorIdx = (obj.chartColorIdx + 1) % obj.chartColors.length;
+					} else {
+						obj.chartColorIdx = (obj.chartColorIdx + 1) % 4;
+					}
 					obj.data = data[target];
 				} else {
 					obj.data = parseSetForPie(target)
 				}
+				console.log(obj)
 				win.JCLib.draw(obj);
 			}
 		}
 
 		setTimeout(function() {
 			getDataAndDraw();
-		}, 5000);
+		}, 1000);
 	}
 
 	// Jcharts API
