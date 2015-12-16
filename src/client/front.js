@@ -65,7 +65,7 @@
 	function showPopup(event) {
 		var currObj = findObjForEvent(event);
 		var txts = [
-			getTypeString(type) + " of " + getTargetString(target) + "\n",
+			getTypeString(currObj.type) + " of " + getTargetString(currObj.target) + "\n",
 			"Data: " + currObj.data
 		];
 		var txt = txts.reduce(function(a, b) { return a + b; }, "");
