@@ -1,10 +1,8 @@
 (function (win) {
-	var data, dataAddr, obj;
-
-	data = {};
-	obj = {};
-	dataAddr = 'http://chart.kr.pe/data.json';
-	pieInfo = {
+	var data = {};
+	var objs = [];
+	var dataAddr = 'http://chart.kr.pe/data.json';
+	var pieInfo = {
 		heart: {
 			labels: ["low", "mid", "high"],
 			cuts: [25, 50]
@@ -20,13 +18,13 @@
 	}
 
 	// Get data from the json file in the local server
-	function getData(callback) {
+	function getDataAndDraw() {
     var xmlHttp = new XMLHttpRequest();
 
 		xmlHttp.onreadystatechange = function() {
 			if (xmlHttp.readyState == 4 && xmlHttp.status == 200) {
 				data = JSON.parse(xmlHttp.responseText);
-				callback();
+				drawCharts();
 			} 
 		};
 		xmlHttp.open("GET", dataAddr, true);
@@ -40,9 +38,28 @@
 	}
 
 	// Parse multiple attributes from an element
-	function parseAttrs(elem, attr) {
+	function parseOpts(elem, attr) {
 		var val = elem.getAttribute(attr);
-		return val ? val.replace(/, +/g, " ").split(/ +/g) : null;
+		var options = val ? val.replace(/, +/g, " ").split(/ +/g) : null;
+		var result = {};
+
+		if (!options) return null;
+		
+		for (i in options) {
+			var x = options[i].split(":");
+			var opt = eraseHyphen(x[0]);
+			result[opt] = x[1];
+		}
+		return result;
+	}
+
+	function eraseHyphen(string) {
+		var str = string.toLowerCase();
+
+		return str.replace(/-([a-z])/g, 
+			function (g) { 
+				return g[1].toUpperCase(); 
+			});
 	}
 
 	function showPopup(event) {
@@ -74,18 +91,16 @@
 	function findObjForEvent(event) {
 		var foundObj = null;
 
-    for (target in obj) {
-      for (type in obj[target]) {
-				var currObj = obj[target][type];
-				var elem = currObj.elem;
-        var rect = elem.getBoundingClientRect();
-        var posX = event.clientX - rect.left;
-        var posY = event.clientY - rect.top;
+		for (i in objs) {
+			var currObj = objs[i];
+			var elem = currObj.elem;
+      var rect = elem.getBoundingClientRect();
+      var posX = event.clientX - rect.left;
+      var posY = event.clientY - rect.top;
 
-        if (posX > 0 && posX < elem.width && posY > 0 && posY < elem.height) {
-					foundObj = currObj;
-					break;
-        }
+      if (posX > 0 && posX < elem.width && posY > 0 && posY < elem.height) {
+				foundObj = currObj;
+				break;
       }
     }
 		
@@ -94,22 +109,23 @@
 
 	// Initialize all charts and animations
 	function init(elem) {
-		var target, type, currObj;
+		var target = parseAttr(elem, "target");
+		var type = parseAttr(elem, "type");		
+		var options = parseOpts(elem, "options");
+		var newObj = {};
 
-		target = parseAttr(elem, "target");
-		type = parseAttr(elem, "type");		
+		newObj.elem = elem;
+		newObj.target = target;
+		newObj.type = type;
+		newObj.width = elem.width;
+		newObj.height = elem.height;
+		newObj.ctx = elem.getContext("2d");
 
-		if (!obj[target]) obj[target] = {};
-		if (!obj[target][type]) obj[target][type] = {};
-		currObj = obj[target][type];
-
-		currObj.elem = elem;
-		currObj.target = target;
-		currObj.type = type;
-		currObj.width = elem.width;
-		currObj.height = elem.height;
-		currObj.ctx = elem.getContext("2d");
-
+		for (opt in options) {
+			newObj[opt] = options[opt];
+		}
+		
+		/*
 		if (type == "animation") {
 			currObj.theme = (theme = parseAttr(elem, "theme")) ? theme : 0
 			currObj.delay = (delay = parseAttr(elem, "delay")) ? delay : 200
@@ -124,7 +140,7 @@
 				currObj.offset = (offset = parseAttr(elem, "offset")) ? offset : 50;
 
 			if (type == "line" || type == "bar") {
-				currObj.range = (range = parseAttrs(elem, "range")) ? range : [-50, 50];
+				//currObj.range = (range = parseAttrs(elem, "range")) ? range : [-50, 50];
 				currObj.maxChartElem = (max = parseAttr(elem, "max")) ? max : 20;
  				currObj.axis = [-50, -25, 0, 25, 50];
  				currObj.lineShape = "step"
@@ -132,8 +148,18 @@
 				currObj.labels = pieInfo[target].labels;
 			}
 		}
-
+*/
+		objs.push(newObj);
 		elem.addEventListener("mousedown", showPopup, false);
+	}
+
+	function startAnims() {
+		for (i in objs) {
+			if (objs[i].type == "animation") {
+       win.JCAnim.setup(objs[i]);
+			}
+		}
+		win.JCAnim.draw();
 	}
 
 	function parseSetForPie(target) {
@@ -164,25 +190,23 @@
 	}
 
 	function drawCharts() {
-		for (target in obj) {
-			for (type in obj[target]) {
-				if (type != "animation") {
-					var currObj = obj[target][type];
+		for (i in objs) {
+			var obj = objs[i];
+			var target = obj.target;
+			var type = obj.type;
 
-					if (type == "line" || type == "bar") {
-						currObj.data = data[target];
-					} else {
-						currObj.data = parseSetForPie(target)
-					}
-					win.JCLib.draw(currObj);
+			if (type != "animation") {
+				if (type == "line" || type == "bar") {
+					obj.data = data[target];
+				} else {
+					obj.data = parseSetForPie(target)
 				}
+				win.JCLib.draw(obj);
 			}
 		}
 
 		setTimeout(function() {
-			getData(function() {
-				drawCharts();
-			})
+			getDataAndDraw();
 		}, 5000);
 	}
 
@@ -195,10 +219,8 @@
 	      init(elems[i]);
 	    }
 
-			getData(function() {
-				drawCharts();
-			});
-			win.JCAnim.draw();
+			getDataAndDraw();
+			startAnims();
 	  }
 	};
 

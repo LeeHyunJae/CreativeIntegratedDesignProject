@@ -1,25 +1,11 @@
 (function (win) {
-	var ctx, renderers, data;
+	var ctx, renderers, data, width, height;
 
-	var chart = {
-		type: null,
-		width: null,
-		height: null,
-		marginOffset: null,
-		range: null,
-		elemNum: 20
-	};
-
-	var gradation = {
-		background: false,
-		chart: true
-	};
-
-	var opColor = {
-		number: 1,
-		background: ["rgb(200, 200, 200)"],
-		chart: ["#002b33", "#0080cc", "#0054cc"]
-	};
+	var opChart = {};
+	var opBackground = {};
+	var opLine = {};
+	var opAnimation = {};
+	var opPie = {};
 
 	var colorType = [["#a1be95", "#e2dfa2", "#92aac7", "#ed5752"],
 									 ["#4897d8", "#ffdb5c", "#fa6e59", "#f8a055"],
@@ -27,20 +13,6 @@
 									 ["#882426", "#cdbea7", "#323030", "#c29545"],
 									 ["#262f34", "#f34a4a", "#f1d3bd", "#615049"],
 									 ["#a1be95", "#e2dfa2", "#92aac7", "#ed5752"]];
-
-	var opLine = {
-		lineShape: "step",
-		lineWidth: 3,
-		lineJoin: "round",
-		lineColor: "grey",
-		dotSize: 4,
-		dotColor: "white"
-	}
-
-	var opShape = {
-		line: "smooth",
-		radius: 0
-	};
 
 	var opAxis = {
 		xValues: [],
@@ -52,12 +24,6 @@
 		lineColor: "grey"
 	};
 
-	var animation = {
-		on: false,
-		type: 0,
-		step: 20
-	};
-
 	var renderers = {
 		"line" : renderLineChart,
 		"bar" : renderBarChart,
@@ -66,14 +32,14 @@
 
 	// Drawing line chart functions
 	function getXInterval() {
-		return (chart.width - 2 * chart.marginOffset) / chart.elemNum;
+		return (width - 2 * opChart.marginOffset) / opChart.elemNum;
 	}
 
 	// return ith x coordinate
 	function getXForIndex(idx) {
 		var dataLen = data.length;
-		var offset = chart.marginOffset;
-		var maxNum = chart.elemNum;
+		var offset = opChart.marginOffset;
+		var maxNum = opChart.elemNum;
 	
 		if (dataLen < maxNum) {
 			return offset + (idx + maxNum - dataLen) * getXInterval();
@@ -84,24 +50,24 @@
 
 	// return y coordinate for input value
 	function getYForValue(val) {
-		var offset = chart.marginOffset;
-		var h = chart.height - 2 * offset;
-		var min = chart.range[0];
-		var max = chart.range[1];
+		var offset = opChart.marginOffset;
+		var h = height - 2 * offset;
+		var min = opChart.range[0];
+		var max = opChart.range[1];
 
 		return h - (h * ((val - min) / (max - min))) + offset;
 	}
 
 	// draw axis function
 	function drawAxis() {
-		var height = chart.height;
-		var offset = chart.marginOffset;
+		var height = height;
+		var offset = opChart.marginOffset;
 		var vals = opAxis.yValues;
 
 		for (i = 0; i < vals.length; i++) {
 			var val = vals[i];
-			var min = chart.range[0];
-			var max = chart.range[1];
+			var min = opChart.range[0];
+			var max = opChart.range[1];
 
 			if (val >= min && val <= max) {
 				var h = getYForValue(val);
@@ -111,7 +77,7 @@
 				ctx.font = opAxis.font;
 				ctx.fillStyle = opAxis.fontColor;
 				ctx.fillText(val, opAxis.yOffset, h);
-				drawDotLine(offset, chart.width - offset, h);
+				drawDotLine(offset, width - offset, h);
 			}
 		}
 		/*
@@ -150,8 +116,8 @@
   // convert out of range values to max or min values
 	function setMinMax() {
 		var dataLen = data.length;
-		var min = chart.range[0];
-		var max = chart.range[1];
+		var min = opChart.range[0];
+		var max = opChart.range[1];
 
 		for (var i = 0; i < dataLen; i++) {
 			if (data[i] < min) data[i] = min;
@@ -179,16 +145,14 @@
 	// set graph color type optionally
 	function setColorType(grad, color){
 		var gradient;
-		var radius = opShape.radius;
-		var height = chart.height;
-		var width = chart.width;
+		var radius = opPie.radius;
 		var centerX = width / 2;
 		var centerY = height / 2;
 
 		if(grad){			
 			if(isHex(color)) color = HexToRGB(color);
 			
-			if(chart.type == "pie") {
+			if(type == "pie") {
 				gradient = ctx.createRadialGradient(centerX, centerY, 
 																						0, centerX, centerY, radius);
 			}
@@ -208,13 +172,11 @@
 
 	function setBackground(grad, color) {
 		setColorType(grad, color);
-		ctx.fillRect(0, 0, chart.width, chart.height);		
+		ctx.fillRect(0, 0, width, height);		
 	}
 
 	function calculateRadius() {
-		var height = chart.height;
-		var width = chart.width;
-		var offset = chart.marginOffset;
+		var offset = opChart.marginOffset;
 		var min = (height < width) ? height : width;
 
 		return min / 2 - offset;
@@ -226,28 +188,28 @@
 		var a2 = 0;
 		var sum = sumSet(data);	
 		var dataLen = data.length;
-		var centerX = chart.width / 2;
-		var centerY = chart.height / 2;
+		var centerX = width / 2;
+		var centerY = height / 2;
 		var angleArray = [];
 
-		if (!opShape.radius) {
+		if (!opPie.radius) {
 			calculateRadius();
 		}
-		setBackground(backgroundGradation, getColor("background",0));
+		setBackground(opBackground.gradation, getColor("background",0));
 	
 		for (var i = 0; i < dataLen; i++) {
 			a2 = a1 + (data[i] / sum) * (2 * Math.PI);
 
-			if(animation.on){
+			if(opAnimation.on){
 				angleArray[i] = { sAngle : a1 , eAngle : a2 };
 				if(i == dataLen - 1) animatePie(ctx, angleArray, 0, 0);
 			}
 			else{
 				ctx.beginPath();
-				ctx.arc(centerX, centerY, opShape.radius, a1, a2, false);
+				ctx.arc(centerX, centerY, opPie.radius, a1, a2, false);
 				ctx.lineTo(centerX, centerY);
 		
-				setColorType(gradation.chart, getColor("chart", (i % opColor.number)));
+				setColorType(opChart.gradation, getColor("chart", i % opChart.colors.length));
 				ctx.fill();
 				ctx.stroke();
 			}
@@ -256,21 +218,21 @@
 	}
 	
 	function animatePie(ctx, angleArray, cnt1, cnt2){
-		var step = animation.step;
-		var centerX = chart.width / 2;
-		var centerY = chart.height / 2;
+		var step = opAnimation.step;
+		var centerX = width / 2;
+		var centerY = height / 2;
 		var sAngle, eAngle;
-		
+
 		for(var i = 0; i < cnt1+1; i++){
 			sAngle = angleArray[i].sAngle;	
 			eAngle = angleArray[i].eAngle;
 			if(i == cnt1) eAngle = sAngle + (eAngle - sAngle) * cnt2 / step;
 				
 			ctx.beginPath();
-			ctx.arc(centerX, centerY, opShape.radius, sAngle, eAngle, false);
+			ctx.arc(centerX, centerY, opPie.radius, sAngle, eAngle, false);
 			ctx.lineTo(centerX, centerY);
 		
-			setColorType(gradation.chart, getColor("chart", (i % opColor.number)));
+			setColorType(opChart.gradation, getColor("chart", i % opChart.colors.length));
 			ctx.fill();
 			ctx.stroke();
 		}
@@ -295,16 +257,9 @@
   // render line chart function 
 	function renderLineChart() {
 		var dataLen = data.length;
-/*    var style = {
-      dotSize: opLine.dotSize,
-      dotColor: opLine.dotColor,
-      lineWidth: opLine.lineWidth,
-      lineColor: opLine.lineColor
-    };
-*/
 		var points = [];
 
-		setBackground(backgroundGradation, getColor("background", 0));
+		setBackground(opBackground.gradation, getColor("background", 0));
 		setMinMax();
 		drawAxis();
 
@@ -318,16 +273,16 @@
 			var point = { x: x, y: y };
 
 			points.push(point);
-			setColorType(gradation.chart, getColor("chart", i % opColor.number));
+			setColorType(opChart.gradation, getColor("chart", i % opChart.colors.length));
 
 			if (i > 0) {
 				if (i == 1) cy = y;
 				ctx.beginPath();
 				ctx.moveTo(prevX, prevY);
 				
-				if(i == dataLen - 1 && animation.on){
+				if(i == dataLen - 1 && opAnimation.on){
 					var animPoints = calcWayPoints(prevX, prevY, x, y);
-					animateLine(ctx, opLine, animPoints, animation.step, 0);
+					animateLine(ctx, opLine, animPoints, opAnimation.step, 0);
 				} else if (opLine.lineShape == "smooth") {
 					cy = renderSmoothLine(cy, x, y);
 				} else {
@@ -341,7 +296,7 @@
 		}
 
 		for (var i = 0; i < dataLen; i++) {
-			if (!animation.on || i < dataLen - 1) {
+			if (opLine.dotOn && (!opAnimation.on || i < dataLen - 1)) {
 				drawCirclePoint(ctx, opLine, points[i]);
 			}
 		}
@@ -357,14 +312,16 @@
 			ctx.lineTo(points[cnt].x, points[cnt].y);
 			ctx.stroke();
 		}
-		drawCirclePoint(ctx, style, points[0]);
+		if (style.dotOn) {
+			drawCirclePoint(ctx, style, points[0]);
+		}
 
 		if (cnt < step) {
 			cnt++;
 			setTimeout(function() {
 				animateLine(ctx, style, points, step, cnt);
 			}, 500 / step);
-		} else {
+		} else if (style.dotOn) {
 			drawCirclePoint(ctx, style, points[points.length - 1]);
 		}
   }
@@ -383,7 +340,7 @@
 		var i, x, y, waypoints = [];
 		var dx = x1 - x0;
 		var dy = y1 - y0; 
-		var step = animation.step;
+		var step = opAnimation.step;
 
 		for(i = 0; i <= step; i++){
 			 x = x0 + dx * i / step;
@@ -409,9 +366,9 @@
 	function renderBarChart() {
 		var x, y, w, h;
 		var dataLen = data.length;
-		var step = animation.step;
+		var step = opAnimation.step;
 
-		setBackground(backgroundGradation, getColor("background", 0));
+		setBackground(opBackground.gradation, getColor("background", 0));
 		setMinMax();
 		drawAxis();
 
@@ -421,17 +378,17 @@
 			y = getYForValue(data[i]);
 			h = y - getYForValue(0);
 
-			setColorType(gradation.chart, getColor("chart", (i % opColor.number))); 
+			setColorType(opChart.gradation, getColor("chart", i % opChart.colors.length)); 
 
-			if (!animation.on) {
+			if (!opAnimation.on) {
 				ctx.fillRect(x, y - h, w, h);
-			} else if (animation.type == 0) {
+			} else if (opAnimation.type == 0) {
         if (i == dataLen - 1) {
           animateBar(ctx, w, x, y, h, step, 0);
         } else {
           ctx.fillRect(x, y - h, w, h);
         }
-			} else if (animation.type == 1) {
+			} else if (opAnimation.type == 1) {
 				animateBar(ctx, w, x, y, h, step, 0);
 			}
 		}
@@ -476,11 +433,11 @@
 	function getColor(a, nthColor){
 		var colorType, color, rgbColor;
 
-		if (a == "chart") colorType = opColor.chart;
-		else if (a == "background") colorType = opColor.background;
+		if (a == "chart") colorType = opChart.colors;
+		else if (a == "background") colorType = opBackground.colors;
 		
 	  color = colorType[nthColor]; 
-		
+
   	if(isHex(color)){
 			rgb_color = HexToRGB(color);
 			return "rgba("+rgb_color.r+", "+rgb_color.g+", "+rgb_color.b+", "+ rgb_color.a+")";
@@ -491,38 +448,50 @@
    	}
 	}
 
+	// A local function
+	function calculateRange(data) {
+		return [ Math.min.apply(null, data), Math.max.apply(null, data) ];
+	}
+
+	function getOpt(opt1, opt2) {
+		return (opt1) ? opt1 : opt2;
+	}
+
 	var JCLib = {
 		draw: function(obj) {
 			ctx = obj.ctx;
 			data = obj.data;
-	    
-			backgroundGradation = obj.backgroundGradation;
-			animation.on = obj.animation;
+			type = obj.type;
+			width = obj.width;
+			height = obj.height;
 
-			chart.elemNum = obj.maxChartElem;
-			chart.range = obj.range;
-			chart.type = obj.type;
-			chart.width = (obj.width) ? obj.width : 100;
-			chart.height = (obj.height) ? obj.height : 100;
-			chart.marginOffset = (obj.offset) ? obj.offset : 50;
+			opChart.elemNum = getOpt(obj.dataLength, data.length);
+			opChart.range = getOpt(obj.dataRange, calculateRange(data));
+			opChart.marginOffset = getOpt(obj.chartOffset, 50);
+			opChart.colors = getOpt(obj.chartColors, colorType[1]);
+			opChart.gradation = getOpt(obj.chartGradation, true);
 
-			opAxis.yValues = obj.axis;
+			opBackground.colors = getOpt(obj.backgroundColors, ["rgb(200, 200, 200)"]);
+			opBackground.gradation = getOpt(obj.backgroundGradation, false);
 
-			//opLine.shape = obj.lineShape;
+			opLine.lineShape = getOpt(obj.lineShape, "step");
+			opLine.lineWidth = getOpt(obj.lineWidth, 3);
+			opLine.lineJoin = getOpt(obj.lineJoin, "round");
+			opLine.lineColor = getOpt(obj.lineColor, "grey");
+			opLine.dotSize = getOpt(obj.dotSize, 4);
+			opLine.dotColor = getOpt(obj.dotColor, "white");
+			opLine.dotOn = getOpt(obj.dotOn, true);
 
-			opShape.radius = (obj.pieRadius == 0) ? obj.pieRadius : calculateRadius();
+			opPie.radius = getOpt(obj.pieRadius, calculateRadius());
 
-			opColor.chart = colorType[1];
-			opColor.number = obj.chartColors.length;
-			opColor.background = obj.backgroundColors;
+			opAnimation.on = getOpt(obj.animationOn, "true");
+			opAnimation.step = getOpt(obj.animationStep, 20);
+			opAnimation.type = getOpt(obj.animationType, 0);
 
-			//gradation.chart = obj.chartGradation;
-
-			while (data.length > chart.elemNum) {
+			while (data.length > opChart.elemNum) {
 				data.shift();
 			}
-
-			renderers[chart.type](data);
+			renderers[type](data);
 		}
 	}
 	win.JCLib = JCLib;
