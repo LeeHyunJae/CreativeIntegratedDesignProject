@@ -6,7 +6,7 @@
 		width: null,
 		height: null,
 		marginOffset: null,
-		range: [0, 1],
+		range: null,
 		elemNum: 20
 	};
 
@@ -28,6 +28,15 @@
 									 ["#262f34", "#f34a4a", "#f1d3bd", "#615049"],
 									 ["#a1be95", "#e2dfa2", "#92aac7", "#ed5752"]];
 
+	var opLine = {
+		lineShape: "step",
+		lineWidth: 3,
+		lineJoin: "round",
+		lineColor: "grey",
+		dotSize: 4,
+		dotColor: "white"
+	}
+
 	var opShape = {
 		line: "smooth",
 		radius: 0
@@ -35,21 +44,18 @@
 
 	var opAxis = {
 		xValues: [],
+		xOffset: 20,
 		yValues: [],
+		yOffset: 40,
 		font: "20px Consolas",
-		color: "white"
+		fontColor: "white",
+		lineColor: "grey"
 	};
 
 	var animation = {
 		on: false,
 		type: 0,
 		step: 20
-	};
-
-	var defaultVars = {
-		yAxisOffset : 10,
-		xAxisOffset : 20,	
-		dotLineStyle : "grey",
 	};
 
 	var renderers = {
@@ -64,10 +70,10 @@
 	}
 
 	// return ith x coordinate
-	function getXForIndex(idx){
+	function getXForIndex(idx) {
 		var dataLen = data.length;
 		var offset = chart.marginOffset;
-		var maxNum = chart.elemNum
+		var maxNum = chart.elemNum;
 	
 		if (dataLen < maxNum) {
 			return offset + (idx + maxNum - dataLen) * getXInterval();
@@ -100,33 +106,34 @@
 			if (val >= min && val <= max) {
 				var h = getYForValue(val);
 
+				ctx.textAlign = "right";
+				ctx.textBaseline = "middle";
 				ctx.font = opAxis.font;
-				ctx.fillStyle = opAxis.color;
-				ctx.fillText(val, defaultVars.yAxisOffset, h + 5);
+				ctx.fillStyle = opAxis.fontColor;
+				ctx.fillText(val, opAxis.yOffset, h);
 				drawDotLine(offset, chart.width - offset, h);
 			}
-		}	
+		}
+		/*
 		ctx.fillText("-20s", 50, height - defaultVars.xAxisOffset); 
 		ctx.fillText("-10s", 0.5 * chart.width - 55, height - defaultVars.xAxisOffset);
 		ctx.fillText("now", chart.width - 95, height - defaultVars.xAxisOffset);
+		*/
 	}
 
 	// draw dot line from start_x to end_x
 	function drawDotLine(startX, endX, y){
-		var i, len;
+		var len = parseInt((endX - startX) / 5);
 
-		len = parseInt((endX - startX) / 5);
-
-		ctx.strokeStyle = defaultVars.dotLineStyle;
-
+		ctx.strokeStyle = opAxis.lineColor;
 		ctx.beginPath();
-		for(i = 0; i < len + 1; i++){
-			if(i%2 == 0){
-				ctx.moveTo(startX + i*5, y);
-				ctx.lineTo(startX + (i+1)*5, y);
+
+		for(var i = 0; i < len + 1; i++){
+			if(i % 2 == 0){
+				ctx.moveTo(startX + i * 5, y);
+				ctx.lineTo(startX + (i + 1) * 5, y);
 			}
 		}
-
 		ctx.stroke();
 	}
 	
@@ -137,7 +144,6 @@
 		for (i = 0; i < set.length; i++) {
 			n += set[i];
 		}
-	
 		return n;
 	}
 
@@ -189,8 +195,8 @@
 			else gradient = ctx.createLinearGradient(0, 0, 0, height);
 			
 			gradient.addColorStop(0, color);
-		  gradient.addColorStop(1, setGradColor(color));
-
+		 // gradient.addColorStop(1, setGradColor(color));
+			gradient.addColorStop(1, 'rgba(50,50,50,1)');
 			ctx.strokeStyle = gradient;
 			ctx.fillStyle = gradient;
 		}
@@ -288,64 +294,88 @@
 
   // render line chart function 
 	function renderLineChart() {
-		var i, x, y, gradient, cx, cy, prevX, prevY;
-		var animationPoints;
 		var dataLen = data.length;
+/*    var style = {
+      dotSize: opLine.dotSize,
+      dotColor: opLine.dotColor,
+      lineWidth: opLine.lineWidth,
+      lineColor: opLine.lineColor
+    };
+*/
+		var points = [];
 
-		setBackground(backgroundGradation, getColor("background",0));
+		setBackground(backgroundGradation, getColor("background", 0));
 		setMinMax();
 		drawAxis();
-		
-		setLineStyle(3, "round");
 
-		for(i = 0; i < dataLen; i++){	
+		ctx.lineWidth = opLine.lineWidth;
+		ctx.lineJoin = opLine.lineJoin;
+		ctx.strokeStyle = opLine.lineColor;
+
+		for (var i = 0; i < dataLen; i++) {	
+			var x = getXForIndex(i) + 0.5 * getXInterval();
+			var y = getYForValue(data[i]);
+			var point = { x: x, y: y };
+
+			points.push(point);
 			setColorType(gradation.chart, getColor("chart", i % opColor.number));
-			
-			x = getXForIndex(i);
-			x += 0.5 * getXInterval();
-			y = getYForValue(data[i]);
-		
-			if(i > 0){
-				if(i == 1) cy = y;
-				
+
+			if (i > 0) {
+				if (i == 1) cy = y;
 				ctx.beginPath();
 				ctx.moveTo(prevX, prevY);
-				if(i == dataLen -1 && animation.on){
-					animationPoints = calcWayPoints(prevX, prevY, x, y);
-					animateLine(ctx, animationPoints, animation.step, 0);
-				}
-				else{
-					if(opShape.line == "smooth") cy = renderSmoothLine(cx, cy, x, y);
-					else ctx.lineTo(x, y);
+				
+				if(i == dataLen - 1 && animation.on){
+					var animPoints = calcWayPoints(prevX, prevY, x, y);
+					animateLine(ctx, opLine, animPoints, animation.step, 0);
+				} else if (opLine.lineShape == "smooth") {
+					cy = renderSmoothLine(cy, x, y);
+				} else {
+					ctx.lineTo(x, y);
 				}
 			  ctx.stroke();
-			
-				drawCirclePoint(prevX, prevY);
 			}
 	
 			prevX = x;
 			prevY = y;
 		}
+
+		for (var i = 0; i < dataLen; i++) {
+			if (!animation.on || i < dataLen - 1) {
+				drawCirclePoint(ctx, opLine, points[i]);
+			}
+		}
 	}
 
-	function animateLine(ctx, animationPoints, step, cnt) {	
+	// A local function
+	function animateLine(ctx, style, points, step, cnt) {	
 		if (cnt > 0) {
+			ctx.lineWidth = style.lineWidth;
+			ctx.strokeStyle = style.lineColor;
 			ctx.beginPath();
-			ctx.moveTo(animationPoints[cnt - 1].x, animationPoints[cnt - 1].y);
-			ctx.lineTo(animationPoints[cnt].x, animationPoints[cnt].y);
+			ctx.moveTo(points[cnt - 1].x, points[cnt - 1].y);
+			ctx.lineTo(points[cnt].x, points[cnt].y);
 			ctx.stroke();
 		}
+		drawCirclePoint(ctx, style, points[0]);
+
 		if (cnt < step) {
 			cnt++;
 			setTimeout(function() {
-				animateLine(ctx, animationPoints, step, cnt);
+				animateLine(ctx, style, points, step, cnt);
 			}, 500 / step);
+		} else {
+			drawCirclePoint(ctx, style, points[points.length - 1]);
 		}
   }
 
-	function drawCirclePoint(x, y){
+	// A local function
+	function drawCirclePoint(ctx, style, point) {
+			ctx.strokeStyle = style.lineColor;
+			ctx.fillStyle = style.dotColor;
 			ctx.beginPath();
-		  ctx.arc(x, y, 5, 0*Math.PI, 2*Math.PI);
+		  ctx.arc(point.x, point.y, style.dotSize, 0 * Math.PI, 2 * Math.PI);
+			ctx.stroke();
 			ctx.fill();
 	}
 
@@ -368,12 +398,7 @@
 		return (waypoints);
 	}
 
-	function setLineStyle(w,j){
-		ctx.lineWidth = w;
-		ctx.lineJoin = j;	
-	}
-
-	function renderSmoothLine(cx, cy, x, y){
+	function renderSmoothLine(cy, x, y){
 		cx = x - 0.5 * getXInterval();
 		ctx.bezierCurveTo(cx, cy, cx, y, x, y);
 
@@ -483,15 +508,15 @@
 
 			opAxis.yValues = obj.axis;
 
-			opShape.line = obj.lineShape;
+			//opLine.shape = obj.lineShape;
+
 			opShape.radius = (obj.pieRadius == 0) ? obj.pieRadius : calculateRadius();
 
-			//opColor.chart = obj.chartColors;
 			opColor.chart = colorType[1];
 			opColor.number = obj.chartColors.length;
 			opColor.background = obj.backgroundColors;
 
-			gradation.chart = obj.chartGradation;
+			//gradation.chart = obj.chartGradation;
 
 			while (data.length > chart.elemNum) {
 				data.shift();
