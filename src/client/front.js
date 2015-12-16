@@ -140,9 +140,9 @@
 				currObj.offset = (offset = parseAttr(elem, "offset")) ? offset : 50;
 
 			if (type == "line" || type == "bar") {
-				//currObj.range = (range = parseAttrs(elem, "range")) ? range : [-50, 50];
+				currObj.range = (range = parseAttrs(elem, "range")) ? range : [0, 100];
 				currObj.maxChartElem = (max = parseAttr(elem, "max")) ? max : 20;
- 				currObj.axis = [-50, -25, 0, 25, 50];
+ 				currObj.axis = [0, 25, 50, 75, 100];
  				currObj.lineShape = "step"
 			} else if (type == "pie") {
 				currObj.labels = pieInfo[target].labels;

@@ -14,6 +14,18 @@
 									 ["#262f34", "#f34a4a", "#f1d3bd", "#615049"],
 									 ["#a1be95", "#e2dfa2", "#92aac7", "#ed5752"]];
 
+	/*
+	var opLabelTable = {
+		on : true,
+		PosX : 800,
+		PosY : 100,
+		Width : 100,
+		Height : 60,
+		font : "20px Consolas",
+		fontColor : "white",
+		lineColor : "grey"
+	} 
+*/
 	var opAxis = {
 		xValues: [],
 		xOffset: 20,
@@ -159,8 +171,7 @@
 			else gradient = ctx.createLinearGradient(0, 0, 0, height);
 			
 			gradient.addColorStop(0, color);
-		 // gradient.addColorStop(1, setGradColor(color));
-			gradient.addColorStop(1, 'rgba(50,50,50,1)');
+		 	gradient.addColorStop(1, setGradColor(color));
 			ctx.strokeStyle = gradient;
 			ctx.fillStyle = gradient;
 		}
@@ -184,7 +195,7 @@
 
 	// Render pie chart function
 	function renderPieChart() {
-		var a1 = 1.5 * Math.PI;
+		var a1 = (-0.5) * Math.PI;
 		var a2 = 0;
 		var sum = sumSet(data);	
 		var dataLen = data.length;
@@ -197,6 +208,8 @@
 		}
 		setBackground(opBackground.gradation, getColor("background",0));
 	
+		if (opLabelTable.on) drawPieLabelTable(ctx);
+
 		for (var i = 0; i < dataLen; i++) {
 			a2 = a1 + (data[i] / sum) * (2 * Math.PI);
 
@@ -212,10 +225,42 @@
 				setColorType(opChart.gradation, getColor("chart", i % opChart.colors.length));
 				ctx.fill();
 				ctx.stroke();
+				
+				drawPieLabel(ctx, angleArray, i);
 			}
 			a1 = a2;
 		}
 	}
+
+	/*
+	function drawPieLabelTable(ctx){
+	
+		var x = opLabelTable.PosX;
+		var y = opLabelTable.PosY;
+
+
+		ctx.fillStyle = "white";
+		ctx.rect(x,y,opLabelTable.Width, opLabelTable.Height);
+		ctx.fill();
+	}
+
+	function drawPieLabel(ctx, angleArray, idx){
+		var contentNum = angleArray.length;
+		var centerX = chart.width/2;
+		var centerY = chart.height/2;
+		var positionX, positionY, labelAngle, labelRadius;
+
+		labelAngle = (angleArray[idx].sAngle + angleArray[idx].eAngle)/2;
+	  labelRadius = opPie.radius + opPie.labels[idx].length*10;
+	
+		positionX = centerX + labelRadius * Math.cos(labelAngle);
+		positionY = centerY + labelRadius * Math.sin(labelAngle);
+		
+	  ctx.textAlign = "center";
+		ctx.font = opAxis.font;
+		ctx.fillStyle = opAxis.fontColor;
+		ctx.fillText(opPie.labels[idx], positionX, positionY);
+	}*/
 	
 	function animatePie(ctx, angleArray, cnt1, cnt2){
 		var step = opAnimation.step;
@@ -226,8 +271,10 @@
 		for(var i = 0; i < cnt1+1; i++){
 			sAngle = angleArray[i].sAngle;	
 			eAngle = angleArray[i].eAngle;
+			
 			if(i == cnt1) eAngle = sAngle + (eAngle - sAngle) * cnt2 / step;
-				
+			if( cnt2 > 9) drawPieLabel(ctx, angleArray, i);
+			
 			ctx.beginPath();
 			ctx.arc(centerX, centerY, opPie.radius, sAngle, eAngle, false);
 			ctx.lineTo(centerX, centerY);
@@ -488,6 +535,9 @@
 			opAnimation.step = getOpt(obj.animationStep, 20);
 			opAnimation.type = getOpt(obj.animationType, 0);
 
+			opPie.labels = obj.labels;
+			
+			opAxis.yValues = obj.axis;
 			while (data.length > opChart.elemNum) {
 				data.shift();
 			}
