@@ -45,11 +45,57 @@
 		return val ? val.replace(/, +/g, " ").split(/ +/g) : null;
 	}
 
+	function showPopup(event) {
+		var currObj = findObjForEvent(event);
+		var txts = [
+			getTypeString(type) + " of " + getTargetString(target) + "\n",
+			"Data: " + currObj.data
+		];
+		var txt = txts.reduce(function(a, b) { return a + b; }, "");
+
+		window.alert(txt);
+	}
+
+	function getTargetString(target) {
+		if (target == "temp") return "Temperature";
+		else if (target == "heart") return "Heartbeat";
+		else if (target == "sleep") return "Sleeping Time";
+		else return "";
+	}
+
+	function getTypeString(type) {
+		if (type == "line") return "Line chart";
+		else if (type == "bar") return "Bar chart";
+		else if (type == "pie") return "Pie chart";
+		else if (type == "animation") return "Animation";
+		else return "";
+	}
+
+	function findObjForEvent(event) {
+		var foundObj = null;
+
+    for (target in obj) {
+      for (type in obj[target]) {
+				var currObj = obj[target][type];
+				var elem = currObj.elem;
+        var rect = elem.getBoundingClientRect();
+        var posX = event.clientX - rect.left;
+        var posY = event.clientY - rect.top;
+
+        if (posX > 0 && posX < elem.width && posY > 0 && posY < elem.height) {
+					foundObj = currObj;
+					break;
+        }
+      }
+    }
+		
+		return foundObj;
+	}
+
 	// Initialize all charts and animations
 	function init(elem) {
 		var target, type, currObj;
 
-		elem.width = elem.width;
 		target = parseAttr(elem, "target");
 		type = parseAttr(elem, "type");		
 
@@ -57,6 +103,7 @@
 		if (!obj[target][type]) obj[target][type] = {};
 		currObj = obj[target][type];
 
+		currObj.elem = elem;
 		currObj.target = target;
 		currObj.type = type;
 		currObj.width = elem.width;
@@ -82,10 +129,11 @@
  				currObj.axis = [-50, -25, 0, 25, 50];
  				currObj.lineShape = "step"
 			} else if (type == "pie") {
-//				currObj.pieRadius = 250;
 				currObj.labels = pieInfo[target].labels;
 			}
 		}
+
+		elem.addEventListener("mousedown", showPopup, false);
 	}
 
 	function parseSetForPie(target) {
@@ -140,18 +188,18 @@
 
 	// Jcharts API
 	JCFront = {
-	    render: function(elems) {
-				elems = document.querySelectorAll(".jchart");
-				
-	      for (var i = 0; i < elems.length; i++) {
-	        init(elems[i]);
-	      }
+		render: function(elems) {
+			elems = document.querySelectorAll(".jchart");	
 
-				getData(function() {
-					drawCharts();
-				});
-				win.JCAnim.draw();
+	    for (var i = 0; i < elems.length; i++) {
+	      init(elems[i]);
 	    }
+
+			getData(function() {
+				drawCharts();
+			});
+			win.JCAnim.draw();
+	  }
 	};
 
 	win.JCFront = JCFront;
