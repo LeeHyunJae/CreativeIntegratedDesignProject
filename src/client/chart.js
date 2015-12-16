@@ -1,6 +1,6 @@
 (function (win) {
 	var ctx, renderers, data;
-	var idxOffset, centerX, centerY;
+	var centerX, centerY;
 
 	var chart = {
 		type: null,
@@ -36,7 +36,8 @@
 
 	var animation = {
 		on: false,
-		type: 0
+		type: 0,
+		step: 20
 	}
 
 	var defaultVars = {
@@ -167,6 +168,10 @@
 	function setColorType(grad, color){
 		var gradient;
 		var radius = opShape.radius;
+		var height = chart.height;
+		var width = chart.width;
+		var centerX = width / 2;
+		var centerY = height / 2;
 
 		if(grad){			
 			if(isHex(color)) color = HexToRGB(color);
@@ -175,7 +180,7 @@
 				gradient = ctx.createRadialGradient(centerX, centerY, 
 																						0, centerX, centerY, radius);
 			}
-			else gradient = ctx.createLinearGradient(0, 0, 0, chart.height);
+			else gradient = ctx.createLinearGradient(0, 0, 0, height);
 			
 			gradient.addColorStop(0, color);
 		  gradient.addColorStop(1, setGradColor(color));
@@ -209,6 +214,8 @@
 		var a2 = 0;
 		var sum = sumSet(data);	
 		var dataLen = data.length;
+		var centerX = chart.width / 2;
+		var centerY = chart.height / 2;
 
 		if (!opShape.radius) {
 			calculateRadius();
@@ -243,11 +250,10 @@
 		
 		setLineStyle(3, "round");
 
-		for(i = idxOffset; i < dataLen; i++){
-		
+		for(i = 0; i < dataLen; i++){	
 			setColorType(gradation.chart, getColor("chart", i % opColor.number));
 			
-			x = getXForIndex(i-idxOffset);
+			x = getXForIndex(i);
 			x += 0.5 * getXInterval();
 			y = getYForValue(data[i]);
 		
@@ -258,7 +264,7 @@
 				ctx.moveTo(prevX, prevY);
 				if(i == dataLen -1 && animation.on){
 					animationPoints = calcWayPoints(prevX, prevY, x, y);
-					animateLine(ctx, animationPoints, 1 );
+					animateLine(ctx, animationPoints, animation.step, 0);
 				}
 				else{
 					if(opShape.line == "smooth") cy = renderSmoothLine(cx, cy, x, y);
@@ -274,19 +280,20 @@
 		}
 	}
 
-	function animateLine(ctx, animationPoints, lineAnimationCnt) {
-			
+	function animateLine(ctx, animationPoints, step, cnt) {	
+		if (cnt > 0) {
 			ctx.beginPath();
-			ctx.moveTo(animationPoints[lineAnimationCnt-1].x, animationPoints[lineAnimationCnt-1].y);
-			ctx.lineTo(animationPoints[lineAnimationCnt].x, animationPoints[lineAnimationCnt].y);
+			ctx.moveTo(animationPoints[cnt - 1].x, animationPoints[cnt - 1].y);
+			ctx.lineTo(animationPoints[cnt].x, animationPoints[cnt].y);
 			ctx.stroke();
+		}
 
-			if (lineAnimationCnt < 10) {
-				lineAnimationCnt++;
-				setTimeout(function() {
-					animateLine(ctx, animationPoints, lineAnimationCnt);
-				}, 100);
-			}
+		if (cnt < step) {
+			cnt++;
+			setTimeout(function() {
+				animateLine(ctx, animationPoints, step, cnt);
+			}, 500 / step);
+		}
   }
 
 	function drawCirclePoint(x, y){
@@ -299,10 +306,11 @@
 		var i, x, y, waypoints = [];
 		var dx = x1 - x0;
 		var dy = y1 - y0; 
-	
-		for(i = 0; i <= 10; i++){
-			 x = x0 + dx * i / 10;
-			 y = y0 + dy * i / 10;
+		var step = animation.step;
+
+		for(i = 0; i <= step; i++){
+			 x = x0 + dx * i / step;
+			 y = y0 + dy * i / step;
 			
 			 waypoints.push({
 				x: x,
@@ -329,14 +337,15 @@
 	function renderBarChart() {
 		var x, y, w, h;
 		var dataLen = data.length;
+		var step = animation.step;
 
 		setBackground(backgroundGradation, getColor("background", 0));
 		setMinMax();
 		drawAxis();
 
-		for (i = idxOffset; i < dataLen; i++){
+		for (i = 0; i < dataLen; i++){
 			w = getXInterval() / 2
-			x = getXForIndex(i - idxOffset);
+			x = getXForIndex(i);
 			y = getYForValue(data[i]);
 			h = y - getYForValue(0);
 
@@ -346,18 +355,17 @@
 				ctx.fillRect(x, y - h, w, h);
 			} else if (animation.type == 0) {
         if (i == dataLen - 1) {
-          animateBar(ctx, w, x, y, h, 0);
+          animateBar(ctx, w, x, y, h, step, 0);
         } else {
           ctx.fillRect(x, y - h, w, h);
         }
 			} else if (animation.type == 1) {
-				animateBar(ctx, w, x, y, h, 0);
+				animateBar(ctx, w, x, y, h, step, 0);
 			}
 		}
 	}
 
-	function animateBar(ctx, w, x, y, h, cnt){
-		var step = 20;
+	function animateBar(ctx, w, x, y, h, step, cnt){
 		var renderedH = h * cnt / step;
 
 		ctx.fillRect(x, y - h, w, renderedH);
@@ -365,8 +373,8 @@
 		if (cnt < step) {
 			cnt++;
 			setTimeout(function() { 
-				animateBar(ctx, w, x, y, h, cnt);
-			}, 25);
+				animateBar(ctx, w, x, y, h, step, cnt);
+			}, 500 / step);
 		}
 	}
 
@@ -437,10 +445,9 @@
 
 			gradation.chart = obj.chartGradation;
 
-			if (data.length > chart.elemNum) {
-				idxOffset = data.length - chart.elemNum;
+			while (data.length > chart.elemNum) {
+				data.shift();
 			}
-			else idxOffset = 0;
 
 			centerX = chart.width / 2;
 			centerY = chart.height / 2;
