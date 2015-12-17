@@ -40,7 +40,7 @@
 	// Parse multiple attributes from an element
 	function parseOpts(elem, attr) {
 		var val = elem.getAttribute(attr);
-		var options = val ? val.replace(/ +/g, " ").split(/ +/g) : null;
+		var options = val ? val.replace(/ +/g, " ").split(/ /g) : null;
 		var result = {};
 
 		if (!options) return null;
@@ -127,30 +127,6 @@
 			newObj[opt] = options[opt];
 		}
 
-		/*
-		if (type == "animation") {
-			currObj.theme = (theme = parseAttr(elem, "theme")) ? theme : 0
-			currObj.delay = (delay = parseAttr(elem, "delay")) ? delay : 200
-
-			win.JCAnim.setup(currObj);
-		} else {
-        currObj.backgroundColors = ["rgb(200, 200, 200)"];
-        currObj.chartColors = ["#002b33", "#0080cc", "#0054cc"];
-        currObj.backgroundGradation = false;
-        currObj.chartGradation = true;
-	      currObj.animation = true;
-				currObj.offset = (offset = parseAttr(elem, "offset")) ? offset : 50;
-
-			if (type == "line" || type == "bar") {
-				currObj.range = (range = parseAttrs(elem, "range")) ? range : [0, 100];
-				currObj.maxChartElem = (max = parseAttr(elem, "max")) ? max : 20;
- 				currObj.axis = [0, 25, 50, 75, 100];
- 				currObj.lineShape = "step"
-			} else if (type == "pie") {
-				currObj.labels = pieInfo[target].labels;
-			}
-		}
-*/
 		objs.push(newObj);
 		elem.addEventListener("mousedown", showPopup, false);
 	}
@@ -208,7 +184,6 @@
 				} else {
 					obj.data = parseSetForPie(target)
 				}
-				console.log(obj)
 				win.JCLib.draw(obj);
 			}
 		}

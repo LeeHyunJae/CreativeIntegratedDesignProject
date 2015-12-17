@@ -1,19 +1,14 @@
 (function (win) {
 	var ctx, renderers, data, width, height;
-
-	var opChart = {};
-	var opBackground = {};
-	var opLine = {};
-	var opAnimation = {};
-	var opPie = {};
-
+	var opChart, opBackground, opLine, opAnimation, opPie;
+	var opXAxis, opYAxis, opDanger;
 	var colorType = [["#a1be95", "#e2dfa2", "#92aac7", "#ed5752"],
 									 ["#4897d8", "#ffdb5c", "#fa6e59", "#f8a055"],
 									 ["#2988bc", "#2f498e", "#f4eade", "#ed8c72"],
 									 ["#882426", "#cdbea7", "#323030", "#c29545"],
 									 ["#262f34", "#f34a4a", "#f1d3bd", "#615049"],
 									 ["#a1be95", "#e2dfa2", "#92aac7", "#ed5752"]];
-
+	var dangerColor = 'red';
 
 	var opLabelTable = {
 		on : true,
@@ -26,10 +21,6 @@
 		lineColor : "grey",
 		color : "rgba(200,200,200)"
 	} 
-	
-	var opXAxis = {};
-	var opYAxis = {};
-
 	var renderers = {
 		"line" : renderLineChart,
 		"bar" : renderBarChart,
@@ -37,8 +28,8 @@
 	};
 
 	// Drawing line chart functions
-	function getXInterval(len) {
-		return (width - 2 * opChart.offset) / len;
+	function getXInterval() {
+		return (width - 2 * opChart.offset) / opChart.elemNum;
 	}
 
 	// return ith x coordinate
@@ -47,9 +38,9 @@
 		var maxNum = opChart.elemNum;
 
 		if (len < maxNum) {
-			return offset + (idx + 0.5 + maxNum - len) * getXInterval(maxNum);
+			return offset + (idx + 0.5 + maxNum - len) * getXInterval();
 		} else {
-			return offset + (idx + 0.5) * getXInterval(maxNum);
+			return offset + (idx + 0.5) * getXInterval();
 		}
 	}
 
@@ -157,6 +148,26 @@
 		}
 	}
 
+	function makeDanger(bool) {
+		if (bool || isDanger()) {
+			drawDanger();
+		}
+	}
+
+	function isDanger() {
+		if (data[data.length - 1] > opDanger.range[1]) return true;
+		else if (data[data.length - 1] < opDanger.range[0]) return true;
+		else return false;
+	}
+
+	function drawDanger() {
+		ctx.save();
+		ctx.fillStyle = opDanger.color;
+		ctx.globalAlpha = 0.5;
+		ctx.fillRect(0, 0, width, height);
+		ctx.restore();
+	}
+
   function setGradColor(color){
 		var splitByParen, splitByComma, gradColor, r, g, b, a;
 		
@@ -182,7 +193,6 @@
 		var centerY = height / 2;
 
 		if (grad) {			
-			//console.log(color);
 			if(isHex(color)) color = HexToRGB(color);
 			if(type == "pie") {
 				gradient = ctx.createRadialGradient(centerX, centerY, 
@@ -304,9 +314,9 @@
 		var centerX = width / 2;
 		var centerY = height / 2;
 		var sAngle, eAngle;
+		var length = angleArray.length;
 
 		for(var i = 0; i <= portion; i++){
-			console.log(opChart.colorIdx);
 			var color = getColor(opChart, "chart", (opChart.colorIdx + i) % opChart.colors.length);
 
 			sAngle = angleArray[i].sAngle;	
@@ -326,15 +336,15 @@
 			cnt++;
 			setTimeout(function() { 
 				animatePie(ctx, angleArray, labels, portion, cnt);
-			}, 500/step);
+			}, 500 / length / step);
 		}
 		else{
-			if(portion < (angleArray.length - 1)){
+			if(portion < (length - 1)){
 				portion++;
 				cnt = 0;
 				setTimeout(function() {
 					animatePie(ctx, angleArray, labels, portion, cnt);
-				}, 500/step);
+				}, 500 / length / step);
 			}
 		}
 	}	
@@ -344,9 +354,14 @@
 		var dataLen = data.length;
 		var points = [];
 
-		setBackground(opBackground.gradation, getColor(opChart, "background", 0));
+		if (!isDanger()) {
+			setBackground(opBackground.gradation, getColor(opChart, "background", 0));
+		} else {
+			ctx.fillStyle = 'grey';
+			ctx.fillRect(0, 0, width, height);
+		}
 		setMinMax();
-		drawAxes();
+		drawAxes();		
 
 		ctx.lineWidth = opLine.lineWidth;
 		ctx.lineJoin = opLine.lineJoin;
@@ -356,7 +371,6 @@
 			var x = getXForIndex(i, dataLen);
 			var y = getYForValue(data[i]);
 			var point = { x: x, y: y };
-
 			var color = getColor(opChart, "chart", (opChart.colorIdx + i) % opChart.colors.length);
 
 			points.push(point);
@@ -369,7 +383,7 @@
 				
 				if(i == dataLen - 1 && opAnimation.on){
 					var animPoints = calcWayPoints(prevX, prevY, x, y);
-					animateLine(ctx, opChart, opLine, animPoints, opAnimation.step, 0);
+					animateLine(ctx, opChart, opLine, animPoints, opAnimation.step, 0, isDanger());
 				} else if (opLine.lineShape == "smooth") {
 					cy = renderSmoothLine(cy, x, y);
 				} else {
@@ -388,10 +402,12 @@
 				drawCirclePoint(ctx, opLine, points[i]);
 			}
 		}
+
+		makeDanger();
 	}
 
 	// A local function
-	function animateLine(ctx, opChart, style, points, step, cnt) {	
+	function animateLine(ctx, opChart, style, points, step, cnt, danger) {	
 		if (cnt > 0) {
 			var color =  getColor(opChart, "chart", opChart.colorIdx % opChart.colors.length);
 			var grad = ctx.createLinearGradient(0, 0, 0, height)
@@ -419,7 +435,6 @@
 		} else if (style.dotOn) {
 			drawCirclePoint(ctx, style, points[points.length - 1]);
 		}
-
 	}
 
 	// A local function
@@ -452,7 +467,7 @@
 	}
 
 	function renderSmoothLine(cy, x, y){
-		cx = x - 0.5 * getXInterval(opChart.elemNum);
+		cx = x - 0.5 * getXInterval();
 		ctx.bezierCurveTo(cx, cy, cx, y, x, y);
 
 		return y;
@@ -464,38 +479,46 @@
 		var dataLen = data.length;
 		var step = opAnimation.step;
 
-		setBackground(opBackground.gradation, getColor(opChart, "background", 0));
+		if (!isDanger()) {
+			setBackground(opBackground.gradation, getColor(opChart, "background", 0));
+    } else {
+			ctx.fillStyle = 'grey';
+      ctx.fillRect(0, 0, width, height);
+    }
+
 		setMinMax();
 		drawAxes();
 
 		for (i = 0; i < dataLen; i++){
 			var color = getColor(opChart, "chart", (opChart.colorIdx + i) % opChart.colors.length    );
 			
-			w = getXInterval(opChart.elemNum) / 2
-			x = getXForIndex(i, dataLen);
-			y = getYForValue(data[i]);
-			h = y - getYForValue(0);
+			w = getXInterval() / 2
+			x = getXForIndex(i, dataLen) - w / 2;
+			y = height - opChart.offset;
+			h = getYForValue(data[i]) + opChart.offset - height;
 
 			setColorType(ctx, opChart.gradation, color); 
 
 			if (!opAnimation.on) {
-				ctx.fillRect(x, y - h, w, h);
+				ctx.fillRect(x, y, w, h);
 			} else if (opAnimation.type == 0) {
         if (i == dataLen - 1) {
           animateBar(ctx, w, x, y, h, step, 0);
         } else {
-          ctx.fillRect(x, y - h, w, h);
+          ctx.fillRect(x, y, w, h);
         }
 			} else if (opAnimation.type == 1) {
 				animateBar(ctx, w, x, y, h, step, 0);
 			}
 		}
+
+		makeDanger();
 	}
 
 	function animateBar(ctx, w, x, y, h, step, cnt){
 		var renderedH = h * cnt / step;
 
-		ctx.fillRect(x, y - h, w, renderedH);
+		ctx.fillRect(x, y, w, renderedH);
 
 		if (cnt < step) {
 			cnt++;
@@ -556,24 +579,28 @@
 	}
 
 	function getOpt(opt1, opt2) {
-		return (opt1) ? opt1 : opt2;
+		return (opt1) ? JSON.parse(opt1) : opt2;
 	}
 
 	var JCLib = {
 		draw: function(obj) {
 			ctx = obj.ctx;
-			data = obj.data;
+			data = obj.data.slice(0);
 			type = obj.type;
 			width = obj.width;
 			height = obj.height;
 
 			opChart = {};
 			opChart.elemNum = getOpt(obj.dataLength, data.length);
-			opChart.range = getOpt(obj.dataRange, [0, 100])//calculateRange(data));
+			opChart.range = getOpt(obj.dataRange, calculateRange(data));
 			opChart.offset = getOpt(obj.chartOffset, 50);
 			opChart.colors = getOpt(obj.chartColors, colorType[1]);
 			opChart.gradation = getOpt(obj.chartGradation, true);
 			opChart.colorIdx = getOpt(obj.chartColorIdx, 0);
+
+			opDanger = {};
+			opDanger.range = getOpt(obj.dangerRange, [40, 60]);
+			opDanger.color = getOpt(obj.dangerColor, 'red');
 
 			opBackground = {};
 			opBackground.colors = getOpt(obj.backgroundColors, ["rgb(200, 200, 200)"]);
