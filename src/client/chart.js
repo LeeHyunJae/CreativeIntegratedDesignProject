@@ -1,15 +1,13 @@
 (function (win) {
 	var ctx, renderers, data, width, height;
 	var opChart, opBackground, opLine, opAnimation, opPie;
-	var opXAxis, opYAxis, opDanger;
-	var colorType = [["#a1be95", "#e2dfa2", "#92aac7", "#ed5752"],
-									 ["#4897d8", "#ffdb5c", "#fa6e59", "#f8a055"],
-									 ["#2988bc", "#2f498e", "#f4eade", "#ed8c72"],
-									 ["#882426", "#cdbea7", "#323030", "#c29545"],
-									 ["#262f34", "#f34a4a", "#f1d3bd", "#615049"],
-									 ["#a1be95", "#e2dfa2", "#92aac7", "#ed5752"]];
+	var opXAxis, opYAxis;
+	var colorType = [
+		["#7DA3A1", "#B7B8B6", "#34675C", "#B3C100"]
+	]
 	var dangerColor = 'red';
 
+	var div = 1.1;
 	var opLabelTable = {
 		on : true,
 		posX : 830,
@@ -148,21 +146,9 @@
 		}
 	}
 
-	function makeDanger(bool) {
-		if (bool || isDanger()) {
-			drawDanger();
-		}
-	}
-
-	function isDanger() {
-		if (data[data.length - 1] > opDanger.range[1]) return true;
-		else if (data[data.length - 1] < opDanger.range[0]) return true;
-		else return false;
-	}
-
 	function drawDanger() {
 		ctx.save();
-		ctx.fillStyle = opDanger.color;
+		ctx.fillStyle = dangerColor;
 		ctx.globalAlpha = 0.5;
 		ctx.fillRect(0, 0, width, height);
 		ctx.restore();
@@ -175,9 +161,9 @@
 		splitByParen = splitByParen[1].split(")");
 		splitByComma = splitByParen[0].split(",");
 
-		r = parseInt(splitByComma[0])/8;
-		g = parseInt(splitByComma[1])/8;
-		b = parseInt(splitByComma[2])/8;
+		r = parseInt(splitByComma[0])/div;
+		g = parseInt(splitByComma[1])/div;
+		b = parseInt(splitByComma[2])/div;
 		a = parseInt(splitByComma[3]);
 
 	  gradColor = "rgba(" + Math.trunc(r) + "," + Math.trunc(g) + "," + Math.trunc(b) + "," + a + ")";
@@ -354,7 +340,7 @@
 		var dataLen = data.length;
 		var points = [];
 
-		if (!isDanger()) {
+		if (opChart.danger) {
 			setBackground(opBackground.gradation, getColor(opChart, "background", 0));
 		} else {
 			ctx.fillStyle = 'grey';
@@ -383,7 +369,7 @@
 				
 				if(i == dataLen - 1 && opAnimation.on){
 					var animPoints = calcWayPoints(prevX, prevY, x, y);
-					animateLine(ctx, opChart, opLine, animPoints, opAnimation.step, 0, isDanger());
+					animateLine(ctx, opChart, opLine, animPoints, opAnimation.step, 0, i);
 				} else if (opLine.lineShape == "smooth") {
 					cy = renderSmoothLine(cy, x, y);
 				} else {
@@ -403,18 +389,23 @@
 			}
 		}
 
-		makeDanger();
+		if (opChart.danger) drawDanger();
 	}
 
 	// A local function
-	function animateLine(ctx, opChart, style, points, step, cnt, danger) {	
+	function animateLine(ctx, opChart, style, points, step, cnt, idx) {	
 		if (cnt > 0) {
-			var color =  getColor(opChart, "chart", opChart.colorIdx % opChart.colors.length);
-			var grad = ctx.createLinearGradient(0, 0, 0, height)
+			var color =  getColor(opChart, "chart", (opChart.colorIdx + idx) % opChart.colors.length);
 
-			grad.addColorStop(0, color)
-			grad.addColorStop(1, setGradColor(color))
-			ctx.strokeStyle = grad;
+			if (opChart.gradation) {
+				var grad = ctx.createLinearGradient(0, 0, 0, height)
+
+				grad.addColorStop(0, color)
+				grad.addColorStop(1, setGradColor(color))
+				ctx.strokeStyle = grad;
+			} else {
+				ctx.strokeStyle = color;
+			}
 			ctx.lineWidth = style.lineWidth;
 			ctx.beginPath();
 			ctx.moveTo(points[cnt - 1].x, points[cnt - 1].y);
@@ -430,7 +421,7 @@
 		if (cnt < step) {
 			cnt++;
 			setTimeout(function() {
-				animateLine(ctx, opChart, style, points, step, cnt);
+				animateLine(ctx, opChart, style, points, step, cnt, idx);
 			}, 500 / step);
 		} else if (style.dotOn) {
 			drawCirclePoint(ctx, style, points[points.length - 1]);
@@ -479,7 +470,7 @@
 		var dataLen = data.length;
 		var step = opAnimation.step;
 
-		if (!isDanger()) {
+		if (opChart.danger) {
 			setBackground(opBackground.gradation, getColor(opChart, "background", 0));
     } else {
 			ctx.fillStyle = 'grey';
@@ -512,7 +503,7 @@
 			}
 		}
 
-		makeDanger();
+		if (opChart.danger) drawDanger();
 	}
 
 	function animateBar(ctx, w, x, y, h, step, cnt){
@@ -582,6 +573,18 @@
 		return (opt1) ? JSON.parse(opt1) : opt2;
 	}
 
+	function getOptArray(opt1, opt2) {
+		if (opt1) {
+			return opt1.slice(1, opt1.length - 1).split(",");
+		} else {
+			return opt2;
+		}
+	}
+
+	function getOptString(opt1, opt2) {
+		return (opt1) ? opt1 : opt2;
+	}
+
 	var JCLib = {
 		draw: function(obj) {
 			ctx = obj.ctx;
@@ -592,45 +595,46 @@
 
 			opChart = {};
 			opChart.elemNum = getOpt(obj.dataLength, data.length);
-			opChart.range = getOpt(obj.dataRange, calculateRange(data));
+			opChart.range = getOptArray(obj.dataRange, calculateRange(data));
 			opChart.offset = getOpt(obj.chartOffset, 50);
-			opChart.colors = getOpt(obj.chartColors, colorType[1]);
+			opChart.colors = getOptArray(obj.chartColors, colorType[1]);
 			opChart.gradation = getOpt(obj.chartGradation, true);
 			opChart.colorIdx = getOpt(obj.chartColorIdx, 0);
-
-			opDanger = {};
-			opDanger.range = getOpt(obj.dangerRange, [40, 60]);
-			opDanger.color = getOpt(obj.dangerColor, 'red');
+			opChart.danger = getOpt(obj.danger, false);
 
 			opBackground = {};
-			opBackground.colors = getOpt(obj.backgroundColors, ["rgb(200, 200, 200)"]);
+			opBackground.colors = getOptArray(obj.backgroundColors, ["rgb(200, 200, 200)"]);
 			opBackground.gradation = getOpt(obj.backgroundGradation, false);
 
+			var colors = colorType[0];
+			opChart.colors = colors.slice(1, colors.length);
+			opBackground.colors = [colors[0]];
+
 			opLine = {};
-			opLine.lineShape = getOpt(obj.lineShape, "step");
+			opLine.lineShape = getOptString(obj.lineShape, "step");
 			opLine.lineWidth = getOpt(obj.lineWidth, 10);
-			opLine.lineJoin = getOpt(obj.lineJoin, "round");
-			opLine.lineColor = getOpt(obj.lineColor, "grey");
+			opLine.lineJoin = getOptString(obj.lineJoin, "round");
+			opLine.lineColor = getOptString(obj.lineColor, "grey");
 			opLine.dotSize = getOpt(obj.dotSize, 4);
-			opLine.dotColor = getOpt(obj.dotColor, "white");
+			opLine.dotColor = getOptString(obj.dotColor, "white");
 			opLine.dotOn = getOpt(obj.dotOn, true);
 
 			opXAxis = {};
 			opXAxis.offset = getOpt(obj.xAxisOffset, 20);
-			opXAxis.labels = getOpt(obj.xAxisValues, ["A", "B", "C"]);
+			opXAxis.labels = getOptArray(obj.xAxisValues, ["A", "B", "C"]);
 			opXAxis.on = (opXAxis.labels.length) ? true : false;
-			opXAxis.fontType = getOpt(obj.xAxisFontType, "20px Consolas");
-			opXAxis.fontColor = getOpt(obj.xAxisFontColor, "white");
+			opXAxis.fontType = getOptString(obj.xAxisFontType, "20px Consolas");
+			opXAxis.fontColor = getOptString(obj.xAxisFontColor, "white");
 
 			opYAxis = {};
 			opYAxis.offset = getOpt(obj.yAxisOffset, 40);
-			opYAxis.values = getOpt(obj.yAxisValues, [0, 25, 50, 75, 100]);
+			opYAxis.values = getOptArray(obj.yAxisValues, [0, 25, 50, 75, 100]);
       opYAxis.on = (opYAxis.values.length) ? true : false;
-      opYAxis.fontType = getOpt(obj.yAxisFontType, "20px Consolas");
-			opYAxis.fontColor = getOpt(obj.yAxisFontColor, "white");
+      opYAxis.fontType = getOptString(obj.yAxisFontType, "20px Consolas");
+			opYAxis.fontColor = getOptString(obj.yAxisFontColor, "white");
 			opYAxis.lineWidth = getOpt(obj.yAxisLineWidth, 1);
-      opYAxis.lineColor = getOpt(obj.yAxisLineColor, "white");
-			opYAxis.lineType = getOpt(obj.yAxisLineType, "dot");
+      opYAxis.lineColor = getOptString(obj.yAxisLineColor, "white");
+			opYAxis.lineType = getOptString(obj.yAxisLineType, "dot");
 
 			opPie = {};
 			opPie.radius = getOpt(obj.pieRadius, calculateRadius());
@@ -640,6 +644,7 @@
 			opAnimation = {};
 			opAnimation.on = getOpt(obj.animationOn, "true");
 			opAnimation.step = getOpt(obj.animationStep, 20);
+			opAnimation.delay = getOpt(obj.animationDelay, 25);
 			opAnimation.type = getOpt(obj.animationType, 0);
 
 			while (data.length > opChart.elemNum) {

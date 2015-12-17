@@ -16,6 +16,11 @@
 			cuts: [25, 50]
 		}
 	}
+	var dangerRange = {
+		heart: [25, 50],
+		temp: [25, 50],
+		sleep: [25, 50]
+	}
 
 	// Get data from the json file in the local server
 	function getDataAndDraw() {
@@ -141,7 +146,7 @@
 	}
 
 	function parseSetForPie(target) {
-		var set = data[target];
+		var set = data[target].slice(0);
 		var cuts = (pieInfo[target].cuts).sort();
 		var cnts = [];
 		var size = cuts.length + 1;
@@ -167,11 +172,32 @@
 		return cnts;
 	}
 
+	function isDangerous(target) {
+		var d = data[target];
+		var last = d[d.length - 1];
+		var range = dangerRange[target];
+
+		if (last < range[0]) return 'low';
+		else if (last > range[1]) return 'high';
+		else return 'norm';
+	}
+
 	function drawCharts() {
 		for (i in objs) {
 			var obj = objs[i];
 			var target = obj.target;
 			var type = obj.type;
+
+			if (isDangerous(target) == 'low') {
+				obj.danger = true;
+				win.JCAnim.setDangerous(target, 'low');
+			} else if (isDangerous(target) == 'high') {
+				obj.danger = true;
+				win.JCAnim.setDangerous(target, 'high');
+			} else {
+				obj.danger = false;
+				win.JCAnim.setDangerous(target, 'norm');
+			}
 
 			if (type != "animation") {
 				if (type == "line" || type == "bar") {
@@ -184,6 +210,7 @@
 				} else {
 					obj.data = parseSetForPie(target)
 				}
+				//console.log(obj)
 				win.JCLib.draw(obj);
 			}
 		}

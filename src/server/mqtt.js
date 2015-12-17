@@ -62,7 +62,7 @@ function writeData(data) {
 function printConfig() {
 	for (i in config) {
 		for (j in config[i]) {
-			console.log("- config[" + i + "][" + j + "]: " + JSON.stringify(config[i][j]))
+//			console.log("- config[" + i + "][" + j + "]: " + JSON.stringify(config[i][j]))
 		}
 	}
 }
@@ -113,7 +113,7 @@ client.on('message', function (topic, message) {
 	insertData(newData);
 	writeData(data);
 
-	// console.log("Received: " + message)
+	 console.log("Received: " + message)
 
 	var str = 'insert into data set ?';
 	var query = connection.query(str, newData, function(err, result) {
