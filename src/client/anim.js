@@ -1,24 +1,20 @@
 (function(win) {
-	var	targets;
-	var ctx, width, height, delay, theme;
-	var paths, imgs;
-
 	// Targets to draw
-	targets = [];
+	var targets = [];
 
 	// Options received from a user
-	ctx = {};
-	width = {};
-	height = {};
-	delay = {};
-	theme = {};
-	dangerous = {};
+	var ctx = {};
+	var width = {};
+	var height = {};
+	var delay = {};
+	var type = {};
+	var dangerous = {};
 
 	// Images to draw
-	imgs = {};
+	var imgs = [];
 
 	// Paths of images
-	paths = {
+	var paths = {
 		temp: [],
 		heart: [],
 		sleep: []
@@ -26,55 +22,58 @@
 
 	// Temperature theme 0
 	paths.temp[0] = [];
-  paths.temp[0] = [];
-  for (i = 0; i <= 27; i++) {
-    paths.temp[0][i] = "../../imgs/heart3/frame_" + i + "_delay-0.03s.gif";
+  for (i = 0; i < 9; i++) {
+    paths.temp[0][i] = "../../imgs/temp1/img (" + (i + 1) + ").gif";
   }
-	
 
 	// Temperature theme 1
-
-	// Heart theme 0
-	paths.heart[0] = [];
-	for (i = 0; i <= 23; i++) {
-		paths.heart[0][i] = "../../imgs/heart4/img (" + (i + 1) + ").gif";
+	paths.temp[1] = [];
+	for (i = 0; i < 28; i++) {
+		paths.temp[1][i] = "../../imgs/temp2/img (" + (i + 1) + ").gif";
 	}
 
 	// Heart theme 1
 	paths.heart[1] = [];
-	for (i = 0; i <= 27; i++) {
-		paths.heart[1][i] = "../../imgs/heart3/frame_" + i + "_delay-0.03s.gif";
+	for (i = 0; i <= 23; i++) {
+		paths.heart[1][i] = "../../imgs/heart4/img (" + (i + 1) + ").gif";
 	}
 
-  paths.heart[2] = [];
-  for (i = 0; i <= 31; i++) {
-    paths.heart[2][i] = "../../imgs/heart5/img (" + (i + 1) + ").gif";
-  }
-
+	// Heart theme 0
+	paths.heart[0] = [];
+	for (i = 0; i <= 27; i++) {
+		paths.heart[0][i] = "../../imgs/heart3/frame_" + i + "_delay-0.03s.gif";
+	}
 
 	// Sleep theme 0
-	paths.sleep.push([
-	]);
-
-	// Sleep theme 1
-	paths.sleep.push([
-	]);
+  paths.sleep[0] = []; 
+  for (i = 0; i < 28; i++) {
+    paths.sleep[0][i] = "../../imgs/temp2/img (" + (i + 1) + ").gif";
+  }
 
 	// Check if all images are loaded or not
 	function isReady(target) {
-		return imgs[target].length == paths[target][theme[target]].length ? true : false;
+		if (imgs[0][target].length == paths[target][0].length) {
+			if (type[target] == 0) return true;
+			else if (!imgs[1][target]) return false;
+			else if (imgs[1][target].length == paths[target][1].length) {
+				return true;
+			} else return false;
+		} else return false;
 	}
 
-	function loadImage(target, cnt) {
-		var path = paths[target][theme[target]][cnt];
+	function loadImage(target, type, cnt) {
+		var path = paths[target][type][cnt];
 		var img = new Image;
 
-		if (!imgs[target]) imgs[target] = [];
-		else if (cnt >= paths[target][theme[target]].length) return;
+		//console.log(target + " " + type + " " + cnt)
+
+		if (!imgs[type]) imgs[type] = {};
+		if (!imgs[type][target]) imgs[type][target] = [];
+		else if (cnt >= paths[target][type].length) return;
 
 		img.onload = function(event) {
-			imgs[target].push(img);
-			loadImage(target, cnt + 1);
+			imgs[type][target].push(img);
+			loadImage(target, type, cnt + 1);
 		}
 		img.src = path;
 	}
@@ -84,23 +83,24 @@
 
 		if (isReady(target)) {
 			ctx[target].clearRect(0, 0, width[target], height[target]);
-			ctx[target].drawImage(imgs[target][num], 0, 0, width[target], height[target]);
-			num = (num + 1) % imgs[target].length;
-		}
 
-		if (dangerous[target] == 'low' || dangerous[target] == 'high') {
-			ctx[target].save();
-			ctx[target].globalAlpha = 0.5;
+			if (type[target] == 0) {
+				ctx[target].drawImage(imgs[0][target][num], 0, 0, width[target], height[target]);
+				num = (num + 1) % imgs[0][target].length;
 
-			if (dangerous[target] == 'low') {
-				d *= 2;
-				ctx[target].fillStyle = 'blue';
-			} else if (dangerous[target] == 'high') {
-				d /= 2;
-				ctx[target].fillStyle = 'red';
+				if (dangerous[target] == 'low') d *= 2;
+				if (dangerous[target] == 'high') d /= 2.5;
+			} else {
+				var idx = 0;
+				var n;
+
+				if (dangerous[target] == 'low' || dangerous[target] == 'high') {
+					idx = 1;
+				}
+				n = num % imgs[idx][target].length;
+				ctx[target].drawImage(imgs[idx][target][n], 0, 0, width[target], height[target]);
+				num = (num + 1) % imgs[idx][target].length;
 			}
-			ctx[target].fillRect(0, 0, width[target], height[target]);
-			ctx[target].restore();
 		}
 
 		win.setTimeout(function() {
@@ -117,11 +117,12 @@
 			ctx[target] = obj.ctx;
 			width[target] = obj.width;
 			height[target] = obj.height;
-			delay[target] = (obj.animationDelay) ? animationDelay : 30;
-			theme[target] = (obj.animationType) ? animationType : 2;
+			delay[target] = (obj.animationDelay) ? obj.animationDelay : 30;
+			type[target] = (obj.animationType) ? obj.animationType : 0;
 			dangerous[target] = false;
 
-			loadImage(target, 0);
+			loadImage(target, 0, 0);
+			if (type[target] == 1) loadImage(target, 1, 0);
 		},
 		
 		setDangerous: function(target, isDng) {

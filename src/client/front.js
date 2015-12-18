@@ -9,17 +9,17 @@
 		},
 		temp: {
 			labels: ["low", "mid", "high"],
-			cuts: [25, 50]
+			cuts: [37.9, 38.1]
 		},
 		sleep: {
-			labels: ["low", "mid", "high"],
-			cuts: [25, 50]
+			labels: ["Non-slept", "Well-slept", "Bad-slept"],
+			cuts: [0, 100]
 		}
 	}
 	var dangerRange = {
-		heart: [25, 50],
-		temp: [25, 50],
-		sleep: [25, 50]
+		heart: [40, 100],
+		temp: [35.5, 37.5],
+		sleep: [0, 100]
 	}
 
 	// Get data from the json file in the local server
@@ -28,12 +28,42 @@
 
 		xmlHttp.onreadystatechange = function() {
 			if (xmlHttp.readyState == 4 && xmlHttp.status == 200) {
-				data = JSON.parse(xmlHttp.responseText);
-				drawCharts();
+				var newData = (JSON.parse(xmlHttp.responseText));
+
+				for (var target in newData) {
+					newData[target] = newData[target].map(function(v) {
+						return v * 1;
+					});
+					if (!data[target] || !areSameArray(data[target], newData[target])) {
+						data[target] = newData[target];
+						drawDynamicCharts(target);
+					}
+				}
+
+				setTimeout(function() {
+					getDataAndDraw();
+				}, 500);
 			} 
 		};
 		xmlHttp.open("GET", dataAddr, true);
 		xmlHttp.send();
+	}
+
+	function areSameData(d1, d2) {
+		var targets = ["heart", "temp", "sleep"];
+		for (var i in targets) {
+			var t = targets[i];
+			if ((!d1[t]) || (!d2[t]) || (!areSameArray(d1[t], d2[t]))) return false;
+		}
+		return true;
+	}
+	
+	function areSameArray(arr1, arr2) {
+		if (arr1.length != arr2.length) return false;
+		for (var i = 0; i < arr1.length; i++) {
+			if (arr1[i] != arr2[i]) return false;
+		}
+		return true;
 	}
 
 	// Parse an attribute from an element
@@ -67,15 +97,57 @@
 			});
 	}
 
+	function getAverage(arr) {
+		return arr.reduce(function(a, b) {
+			return a + b;
+		}, 0) / arr.length;
+	}
+
+	function getStdDev(arr) {
+		var avg = getAverage(arr);
+		var sqrDiffs = arr.map(function(v) {
+			var diff = v - avg;
+			return diff * diff;
+		});
+		var avgSqrDiff = getAverage(sqrDiffs);
+		
+		return Math.sqrt(avgSqrDiff);
+	}
+
+	function cutOff(arr, len) {
+		var newArr = arr.slice(0);
+
+		while (newArr.length > len) {
+			newArr = newArr.slice(1, newArr.length);
+		}
+		return newArr;
+	}
+
 	function showPopup(event) {
 		var currObj = findObjForEvent(event);
-		var txts = [
-			getTypeString(currObj.type) + " of " + getTargetString(currObj.target) + "\n",
-			"Data: " + currObj.data
-		];
-		var txt = txts.reduce(function(a, b) { return a + b; }, "");
 
-		window.alert(txt);
+		if (currObj) {
+			var currData = currObj.data.slice(0);
+			var txts, txt;
+			var avg, stdDev;
+
+			if (currObj.dataLength) {
+				currData = cutOff(currData, currObj.dataLength);
+			}
+
+			avg = getAverage(currData);
+			stdDev = getStdDev(currData);
+
+			txts = [
+				getTypeString(currObj.type) + " of " + getTargetString(currObj.target) + "\n",
+				"Data length: " + currData.length + "\n",
+				"Average: " + avg.toFixed(2) + "\n",
+				"Standard deviation: " + stdDev.toFixed(2)
+			];
+			txt = txts.reduce(function(a, b) { return a + b; }, "");
+
+			window.alert(txt);
+		}
 	}
 
 	function getTargetString(target) {
@@ -108,6 +180,10 @@
 				break;
       }
     }
+
+		if (foundObj.type == "animation") {
+			foundObj = null;
+		}
 		
 		return foundObj;
 	}
@@ -117,6 +193,7 @@
 		var target = parseAttr(elem, "target");
 		var type = parseAttr(elem, "type");		
 		var options = parseOpts(elem, "options");
+		var data = parseAttr(elem, "data");
 		var newObj = {};
 
 		newObj.elem = elem;
@@ -125,6 +202,14 @@
 		newObj.width = elem.width;
 		newObj.height = elem.height;
 		newObj.ctx = elem.getContext("2d");
+
+		newObj.dataOn = (data && type != "animation") ? true : false;
+		if (newObj.dataOn) {
+			var newData = data.split(",").map(function(v) {
+				return v * 1;
+			});
+			newObj.data = newData;
+		}
 
 		newObj.chartColorIdx = 0;
 
@@ -182,11 +267,26 @@
 		else return 'norm';
 	}
 
-	function drawCharts() {
+	function drawStaticCharts() {
+    for (i in objs) {
+      var obj = objs[i];
+
+			if (obj.dataOn) {
+				obj.danger = false;
+				obj.chartColorIdx = 0;
+				win.JCLib.draw(obj);
+			}
+    }
+	}
+
+	function drawDynamicCharts(target) {
 		for (i in objs) {
 			var obj = objs[i];
-			var target = obj.target;
+			var objTarget = obj.target;
 			var type = obj.type;
+
+			if (obj.dataOn) continue;
+			if (objTarget != target) continue;
 
 			if (isDangerous(target) == 'low') {
 				obj.danger = true;
@@ -199,25 +299,22 @@
 				win.JCAnim.setDangerous(target, 'norm');
 			}
 
-			if (type != "animation") {
-				if (type == "line" || type == "bar") {
-					if (obj.chartColors) {
-						obj.chartColorIdx = (obj.chartColorIdx + 1) % obj.chartColors.length;
-					} else {
-						obj.chartColorIdx = (obj.chartColorIdx + 1) % 4;
-					}
-					obj.data = data[target];
+			if (type == "line" || type == "bar") {
+				if (obj.chartColors) {
+					obj.chartColorIdx = (obj.chartColorIdx + 1) % obj.chartColors.length;
 				} else {
-					obj.data = parseSetForPie(target)
+					obj.chartColorIdx = (obj.chartColorIdx + 1) % 4;
 				}
-				//console.log(obj)
+				obj.data = data[target];
+			} else {
+				obj.data = [17, 3, 4];
+				//obj.data = parseSetForPie(target)
+			}
+
+			if (type != "animation") {
 				win.JCLib.draw(obj);
 			}
 		}
-
-		setTimeout(function() {
-			getDataAndDraw();
-		}, 1000);
 	}
 
 	// Jcharts API
@@ -229,6 +326,7 @@
 	      init(elems[i]);
 	    }
 
+			drawStaticCharts();
 			getDataAndDraw();
 			startAnims();
 	  }

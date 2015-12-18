@@ -25,9 +25,9 @@ function isDangerous(target) {
 	}) / currData.length;
 
 	if (target == "temp") {
-		return (avg >= 40 || avg <= 35) ? true : false;
+		return (avg >= 37.5 || avg <= 35.5) ? true : false;
 	} else if (target == "heart") {
-		return (avg >= 200 || avg <= 50) ? true : false;
+		return (avg >= 100 || avg <= 40) ? true : false;
 	} else {
 		return (avg >= 100 || avg <= 0) ? true : false;
 	}
@@ -49,23 +49,32 @@ function checkData() {
 					data[target].push(rows[i].value);
 				}
 				if (data[target].length > 0 && isDangerous(target)) {
-					warn();
-				}	
+					console.log("You are dangerous in " + target);
+					warn(target);
+				}	else {
+					console.log("You are normal in " + target);
+				}
 			});
 		})(target);
 	}
 
 	setTimeout(function() {
 		checkData();
-	}, 60000);
+	}, 10000);
 }
 
 // Warn the user
-function warn() {
-	sms.send('010-5564-3754', 'You are dangerous.', function() {
+function warn(target) {
+	var msg = "";
+
+	if (target == 'temp') msg = "Your body temperature is too high!";
+	else if (target == 'heart') msg = "Your heart is beating too fast!";
+	else msg = "You haven't slept very well!";
+
+	sms.send('010-5564-3754', msg, function() {
 		console.log("The message has been sent.");
 	});
-	mail.send('ysc1802@gmail.com', 'Hey', 'You are dangerous.', function() {
+	mail.send('ysc1802@gmail.com', 'You are in danger!', msg, function() {
 		console.log('haha');
 	});
 }

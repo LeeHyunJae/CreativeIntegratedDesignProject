@@ -1,0 +1,99 @@
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <title>Charts</title>
+
+    <!-- Bootstrap Core CSS -->
+    <link href="css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Custom CSS -->
+    <link href="css/stylish-portfolio.css" rel="stylesheet">
+
+    <!-- Custom Fonts -->
+    <link href="font-awesome/css/font-awesome.min.css" rel="stylesheet" type="text/css">
+    <link href="http://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,700,300italic,400italic,700italic" rel="stylesheet" type="text/css">
+
+</head>
+<body>
+
+	<!-- haha -->
+	<div id="container">
+			<div class="row text-center">
+
+<div class="col-lg-4 col-md-6">
+	<h2>Line chart</h2>
+	<canvas id="test" class="jchart" target="temp" type="line" width="400" height="400" data="34,34,21,58,47,26,53,43,16,35"
+		options="animation:true data-range:[0,80] y-axis-line-color:black y-axis-values:[0,20,40,60,80] background-colors:[#F0FFF0] x-axis-labels:[] dot-on:true data-length:10 chart-gradation:false background-gradation:false line-width:8">
+	</canvas>
+</div>
+
+<div class="col-lg-4 col-md-6">
+	<h2>Bar chart</h2>
+  <canvas id="test" class="jchart" target="temp" type="bar" width="400" height="400"
+  	options="animation-on:true animation-type:1 y-axis-font-size:30px y-axis-font-color:black data-range:[35,40] dot-on:true data-length:10 x-axis-labels:[A,B,C,D,E,F,G,H,I,J] y-axis-values:[35,36,37,38,39,40]">
+  </canvas>
+</div>
+
+<div class="col-lg-4 col-md-6">
+	<h2>Pie chart</h2>
+  <canvas id="test" class="jchart" target="temp" type="pie" width="400" height="400" data="20,20,20"
+	  options="animation-on:false dot-on:true pie-label-offset:-45 pie-label-font:Arial pie-label-size:28px chart-colors:[#FB6542,#FFBB00,#3F681C]">
+  </canvas>
+</div>
+
+<div class="col-lg-4 col-md-6">
+	<h2>Line chart</h2>
+  <canvas id="test" class="jchart" target="temp" type="line" width="400" height="400"
+	  options="animation:false data-range:[36,38] chart-colors:[#FBC8AC,#26D72A,#F18D9E,#98DBC6] dot-on:true data-length:20 x-axis-labels:[] y-axis-values:[36,37,38] line-shape:smooth line-width:5">
+  </canvas>
+</div>	
+
+<div class="col-lg-4 col-md-6">
+	<h2>Bar chart</h2>
+  <canvas id="test" class="jchart" target="temp" type="bar" width="400" height="400" data="89,95,68,95,83"
+	  options="animation-on:false animation-type:1 x-axis-font-size:30px data-range:[0,100] background-colors:[#FFF8DC] chart-colors:[#F52549,#FA6775,#FFD64D,#9BC01C,#D1A9B8] dot-on:true data-length:5 x-axis-labels:[A,B,C,D,E] y-axis-values:[0,20,40,60,80,100] chart-gradation:true">
+  </canvas> 
+</div>
+
+<div class="col-lg-4 col-md-6">
+	<h2>Pie chart</h2>
+	<canvas id="test" class="jchart" target="temp" type="pie" width="400" height="400" data="35,20,30,10"
+	  options="animation-on:false dot-on:true pie-label-color:#0F1B07 pie-labels:[Apple,Samsung,Shaomi,LG] pie-label-offset:-25 chart-gradation:false pie-label-font:Arial pie-label-size:28px">
+  </canvas>
+</div>
+
+<div class="col-lg-4 col-md-6">
+	<h2>Line chart</h2>
+  <canvas id="test" class="jchart" target="temp" type="line" width="400" height="400"
+	  options="animation:false data-range:[36,38] chart-colors:[#FB6542] dot-on:false data-length:10 x-axis-labels:[] y-axis-values:[36,36.5,37,37.5,38] y-axis-offset:45 y-axis-line-color:black y-axis-font-color:black background-gradation:true line-shape:smooth line-width:10">
+  </canvas>
+</div>	
+
+<div class="col-lg-4 col-md-6">
+	<h2>Bar chart</h2>
+  <canvas id="test" class="jchart" target="temp" type="bar" width="400" height="400"
+	  options="animation:true data-range:[35,40] chart-colors:[#F98866,#80BD9E] y-axis-on:false dot-on:true data-length:5 x-axis-labels:[A,B,C,D,E] y-axis-values:[35,36,37,38,39,40] chart-gradation:true">
+  </canvas> 
+</div>
+
+<div class="col-lg-4 col-md-6">
+	<h2>Pie chart</h2>
+	<canvas id="test" class="jchart" target="temp" type="pie" width="400" height="400"
+	  options="animation-on:true pie-labels:[A,B,C,D] data-length:4 pie-label-color:#CDCDC0 pie-label-offset:-45 chart-gradation:true pie-label-font:Arial pie-label-size:28px chart-colors:[#50312F,#CB0000,#E4EA8C,#3F6C45]">
+  </canvas>
+</div>
+
+	</body>
+	<script src="../client/chart.js"></script>
+	<script src="../client/front.js"></script>
+	<script src="../client/anim.js"></script>
+	<script>
+		JCFront.render();
+	</script>
+</html>

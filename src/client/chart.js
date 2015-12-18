@@ -3,20 +3,19 @@
 	var opChart, opBackground, opLine, opAnimation, opPie;
 	var opXAxis, opYAxis;
 	var colorType = [
-		["#7DA3A1", "#B7B8B6", "#34675C", "#B3C100"]
+		["#7DA3A1", "#B3C100", "#34675C", "#B7B8B6"]
 	]
 	var dangerColor = 'red';
 
-	var div = 1.1;
+	var div = 1.7;
 	var opLabelTable = {
 		on : true,
 		posX : 830,
 		posY : 100,
 		width : 130,
 		height : 300,
-		font : "20px Consolas",
+		font : "16px Consolas",
 		fontColor : "black",
-		lineColor : "grey",
 		color : "rgba(200,200,200)"
 	} 
 	var renderers = {
@@ -63,9 +62,9 @@
 		var vals = opYAxis.values;
 
 		for (i = 0; i < vals.length; i++) {
-			var val = vals[i];
-			var min = opChart.range[0];
-			var max = opChart.range[1];
+			var val = vals[i] * 1;
+			var min = opChart.range[0] * 1;
+			var max = opChart.range[1] * 1;
 
 			if (val >= min && val <= max) {
 				var h = getYForValue(val);
@@ -166,7 +165,7 @@
 		b = parseInt(splitByComma[2])/div;
 		a = parseInt(splitByComma[3]);
 
-	  gradColor = "rgba(" + Math.trunc(r) + "," + Math.trunc(g) + "," + Math.trunc(b) + "," + a + ")";
+	  gradColor = "rgba(" + Math.round(r) + "," + Math.round(g) + "," + Math.round(b) + "," + a + ")";
   
 		return gradColor;
 	}
@@ -230,13 +229,14 @@
 			angleArray[i] = { sAngle : a1 , eAngle : a2 };
 
 			if(opAnimation.on){
-				if(i == dataLen - 1) animatePie(ctx, angleArray, opPie.labels, 0, 0);
+				if(i == dataLen - 1) animatePie(ctx, opChart,opPie, angleArray, opPie.labels, 0, 0);
 			}
 			else{
-				setColorType(ctx, opChart.gradation, getColor("chart", i % opChart.colors.length));
+				setColorType(ctx, opChart.gradation, getColor(opChart, "chart", i % opChart.colors.length));
 				drawArc(ctx, centerX, centerY, opPie.radius, a1, a2);
 				
-				if(opPie.labelOn) drawPieLabel(ctx, angleArray, i);
+				if(opPie.labelOn && data[i]!=0) drawPieLabel(ctx, opPie, angleArray, i);
+				
 			}
 			a1 = a2;
 		}
@@ -264,26 +264,27 @@
 	
 			ctx.textAlign = "bottom";
 			ctx.textAlign = "left";
-			ctx.font = opLabelTable.font;
+			ctx.font = opPie.fontFS;
 			ctx.fillText(labels[i], tmpPosX + interval + 10, tmpPosY + (interval*2/4));  
 		}
 	}
 
-	function drawPieLabel(ctx, angleArray, idx){
+	function drawPieLabel(ctx, opPie, angleArray, idx){
 		var contentNum = angleArray.length;
 		var centerX = width/2;
 		var centerY = height/2;
 		var positionX, positionY, labelAngle, labelRadius;
 
 		labelAngle = (angleArray[idx].sAngle + angleArray[idx].eAngle)/2;
-	  labelRadius = opPie.radius + opPie.labels[idx].length*10;
+	  labelRadius = opPie.radius + opPie.labelOffset;
 	
 		positionX = centerX + labelRadius * Math.cos(labelAngle);
 		positionY = centerY + labelRadius * Math.sin(labelAngle);
 		
 	  ctx.textAlign = "center";
-		ctx.font = opLabelTable.font;
-		ctx.fillStyle = opLabelTable.fontColor;
+		ctx.textBaseline = "middle";
+		ctx.font = opPie.labelFS;
+		ctx.fillStyle = opPie.labelColor;
 		ctx.fillText(opPie.labels[idx], positionX, positionY);
 	}
 
@@ -295,7 +296,7 @@
 		ctx.closePath();
 	}
 
-	function animatePie(ctx, angleArray, labels, portion, cnt){
+	function animatePie(ctx, opChart, opPie, angleArray, labels, portion, cnt){
 		var step = opAnimation.step;
 		var centerX = width / 2;
 		var centerY = height / 2;
@@ -311,17 +312,17 @@
 			if(i == portion){
 				eAngle = sAngle + (eAngle - sAngle) * cnt / step;
 			}
-			
-			if(opPie.labelOn && cnt > 9) drawPieLabel(ctx, angleArray, i);
 		
 			setColorType(ctx, opChart.gradation, color);
 			drawArc(ctx, centerX, centerY, opPie.radius, sAngle, eAngle);
+
+			if(opPie.labelOn && data[i]!=0) drawPieLabel(ctx, opPie, angleArray, i);
 		}
 
 		if (cnt < step) {
 			cnt++;
 			setTimeout(function() { 
-				animatePie(ctx, angleArray, labels, portion, cnt);
+				animatePie(ctx, opChart, opPie, angleArray, labels, portion, cnt);
 			}, 500 / length / step);
 		}
 		else{
@@ -329,7 +330,7 @@
 				portion++;
 				cnt = 0;
 				setTimeout(function() {
-					animatePie(ctx, angleArray, labels, portion, cnt);
+					animatePie(ctx, opChart, opPie, angleArray, labels, portion, cnt);
 				}, 500 / length / step);
 			}
 		}
@@ -340,10 +341,10 @@
 		var dataLen = data.length;
 		var points = [];
 
-		if (opChart.danger) {
+		if (!opChart.danger) {
 			setBackground(opBackground.gradation, getColor(opChart, "background", 0));
 		} else {
-			ctx.fillStyle = 'grey';
+			ctx.fillStyle = 'white';
 			ctx.fillRect(0, 0, width, height);
 		}
 		setMinMax();
@@ -470,10 +471,10 @@
 		var dataLen = data.length;
 		var step = opAnimation.step;
 
-		if (opChart.danger) {
+		if (!opChart.danger) {
 			setBackground(opBackground.gradation, getColor(opChart, "background", 0));
     } else {
-			ctx.fillStyle = 'grey';
+			ctx.fillStyle = 'white';
       ctx.fillRect(0, 0, width, height);
     }
 
@@ -481,7 +482,7 @@
 		drawAxes();
 
 		for (i = 0; i < dataLen; i++){
-			var color = getColor(opChart, "chart", (opChart.colorIdx + i) % opChart.colors.length    );
+			var color = getColor(opChart, "chart", (opChart.colorIdx + i) % opChart.colors.length);
 			
 			w = getXInterval() / 2
 			x = getXForIndex(i, dataLen) - w / 2;
@@ -494,27 +495,28 @@
 				ctx.fillRect(x, y, w, h);
 			} else if (opAnimation.type == 0) {
         if (i == dataLen - 1) {
-          animateBar(ctx, w, x, y, h, step, 0);
+          animateBar(ctx, color, w, x, y, h, step, 0);
         } else {
           ctx.fillRect(x, y, w, h);
         }
 			} else if (opAnimation.type == 1) {
-				animateBar(ctx, w, x, y, h, step, 0);
+				animateBar(ctx, color, w, x, y, h, step, 0);
 			}
 		}
 
 		if (opChart.danger) drawDanger();
 	}
 
-	function animateBar(ctx, w, x, y, h, step, cnt){
+	function animateBar(ctx, color, w, x, y, h, step, cnt){
 		var renderedH = h * cnt / step;
 
+		ctx.fillStyle = color;
 		ctx.fillRect(x, y, w, renderedH);
 
 		if (cnt < step) {
 			cnt++;
 			setTimeout(function() { 
-				animateBar(ctx, w, x, y, h, step, cnt);
+				animateBar(ctx, color, w, x, y, h, step, cnt);
 			}, 500 / step);
 		}
 	}
@@ -547,7 +549,7 @@
 
 		if (a == "chart") colorType = opChart.colors;
 		else if (a == "background") colorType = opBackground.colors;
-		
+
 	  color = colorType[nthColor]; 
 
   	if(isHex(color)){
@@ -588,7 +590,7 @@
 	var JCLib = {
 		draw: function(obj) {
 			ctx = obj.ctx;
-			data = obj.data.slice(0);
+			data = (obj.data) ? obj.data.slice(0) : null;
 			type = obj.type;
 			width = obj.width;
 			height = obj.height;
@@ -597,18 +599,14 @@
 			opChart.elemNum = getOpt(obj.dataLength, data.length);
 			opChart.range = getOptArray(obj.dataRange, calculateRange(data));
 			opChart.offset = getOpt(obj.chartOffset, 50);
-			opChart.colors = getOptArray(obj.chartColors, colorType[1]);
+			opChart.colors = getOptArray(obj.chartColors, colorType[0]);
 			opChart.gradation = getOpt(obj.chartGradation, true);
 			opChart.colorIdx = getOpt(obj.chartColorIdx, 0);
 			opChart.danger = getOpt(obj.danger, false);
 
 			opBackground = {};
-			opBackground.colors = getOptArray(obj.backgroundColors, ["rgb(200, 200, 200)"]);
+			opBackground.colors = getOptArray(obj.backgroundColors, ["#F5F5F5"]);
 			opBackground.gradation = getOpt(obj.backgroundGradation, false);
-
-			var colors = colorType[0];
-			opChart.colors = colors.slice(1, colors.length);
-			opBackground.colors = [colors[0]];
 
 			opLine = {};
 			opLine.lineShape = getOptString(obj.lineShape, "step");
@@ -621,25 +619,36 @@
 
 			opXAxis = {};
 			opXAxis.offset = getOpt(obj.xAxisOffset, 20);
-			opXAxis.labels = getOptArray(obj.xAxisValues, ["A", "B", "C"]);
+			opXAxis.labels = getOptArray(obj.xAxisLabels, ["A", "B", "C"]);
 			opXAxis.on = (opXAxis.labels.length) ? true : false;
-			opXAxis.fontType = getOptString(obj.xAxisFontType, "20px Consolas");
-			opXAxis.fontColor = getOptString(obj.xAxisFontColor, "white");
+//			opXAxis.fontType = getOptString(obj.xAxisFontType, "20px Consolas");
+			opXAxis.fontColor = getOptString(obj.xAxisFontColor, "#778899");
+			opXAxis.font = getOptString(obj.xAxisFontType, "Consolas");
+			opXAxis.size = getOptString(obj.xAxisFontSize, "20px");
+			opXAxis.fontType = opXAxis.size + " " + opXAxis.font;
 
 			opYAxis = {};
 			opYAxis.offset = getOpt(obj.yAxisOffset, 40);
 			opYAxis.values = getOptArray(obj.yAxisValues, [0, 25, 50, 75, 100]);
       opYAxis.on = (opYAxis.values.length) ? true : false;
-      opYAxis.fontType = getOptString(obj.yAxisFontType, "20px Consolas");
-			opYAxis.fontColor = getOptString(obj.yAxisFontColor, "white");
+//      opYAxis.fontType = getOptString(obj.yAxisFontType, "20px Consolas");
+			opYAxis.fontColor = getOptString(obj.yAxisFontColor, "#778899");
 			opYAxis.lineWidth = getOpt(obj.yAxisLineWidth, 1);
-      opYAxis.lineColor = getOptString(obj.yAxisLineColor, "white");
+      opYAxis.lineColor = getOptString(obj.yAxisLineColor, "#778899");
 			opYAxis.lineType = getOptString(obj.yAxisLineType, "dot");
+			opYAxis.font = getOptString(obj.yAXisFontType, "Consolas");
+			opYAxis.size = getOptString(obj.yAxisFontSize, "20px");
+			opYAxis.fontType = opYAxis.size + " " + opYAxis.font;
 
 			opPie = {};
 			opPie.radius = getOpt(obj.pieRadius, calculateRadius());
-			opPie.labels = ["low", "mid", "high"];
+			opPie.labels = getOptArray(obj.pieLabels, ["low", "mid", "high"]);
 			opPie.labelOn = true;
+			opPie.labelOffset = getOpt(obj.pieLabelOffset, 50);
+			opPie.labelFont = getOptString(obj.pieLabelFont, "Consolas");
+			opPie.labelSize = getOptString(obj.pieLabelSize, "16px");
+			opPie.labelFS = opPie.labelSize + " " + opPie.labelFont;
+			opPie.labelColor = getOptString(obj.pieLabelColor, "black");
 
 			opAnimation = {};
 			opAnimation.on = getOpt(obj.animationOn, "true");
